@@ -8,27 +8,27 @@
 
 using namespace cat;
 
-opt<std::string> call(const box<std::string>& s)
+opt<std::string> free_fn(const box<std::string>& s)
 {
-    return "";
+    std::cout << *s << std::endl;
+    return "second";
 }
 
 int main()
 {
     vec<int> v;
-    v += 1;
+    v << 1;
     v >>= [] (int i) {
         vec<float> g;
-        g += 1.0f;
+        g << 1.0f;
         return g;
     };
 
-    opt<box<std::string>> t = "A";
-    for (auto&& s : t) {
-        for (auto&& x : call(s)) {
-            std::cout << x;
-        }
-    }
+    opt<box<std::string>> t = "first";
+    t >>= free_fn >>= [] (const std::string &s) {
+        std::cout << s << std::endl;
+        return nil{};
+    };
 
     return 0;
 }

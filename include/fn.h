@@ -11,29 +11,32 @@ namespace cat {
 namespace kernel {
 
 template <typename T>
-struct lambda_decay;
+struct fn;
 
-template <typename T, typename O = decltype(&T::operator())>
-struct lambda : public lambda_decay<O>
+template <typename R, typename... Args>
+struct fn<R(*)(Args...)>
+{
+    typedef R result_type;
+};
+
+template <typename T>
+struct fn_object;
+
+template <typename T>
+struct fn<decltype(&T::operator())> : public fn_object<decltype(&T::operator())>
 {
 };
 
-template <typename ClassType, typename ReturnType, typename... Args>
-struct lambda_decay<ReturnType(ClassType::*)(Args...) const>
+template <typename O, typename R, typename... Args>
+struct fn_object<R(O::*)(Args...) const>
 {
-    typedef ReturnType result_type;
+    typedef R result_type;
 };
 
-template <typename ClassType, typename ReturnType, typename... Args>
-struct lambda_decay<ReturnType(ClassType::*)(Args...)>
+template <typename O, typename R, typename... Args>
+struct fn_object<R(O::*)(Args...)>
 {
-    typedef ReturnType result_type;
-};
-
-template <typename ReturnType, typename... Args>
-struct lambda_decay<ReturnType(*)(Args...)>
-{
-    typedef ReturnType result_type;
+    typedef R result_type;
 };
 
 template <typename T, typename U, typename R>
@@ -70,12 +73,12 @@ struct bind
     T t; U u;
 };
 
-template <typename T
-         ,typename U
-         ,typename DT = typename std::decay_t<T>
-         ,typename DU = typename std::decay_t<U>
-         ,typename R = typename lambda<DT>::result_type>
-using map = typename std::conditional_t<std::is_base_of_v<monad, R>, bind<DT, DU>, fmap<DT, DU, R>>;
+template <typename F
+         ,typename G
+         ,typename R = typename fn<std::decay_t<F>>::result_type>
+using map = typename std::conditional_t<std::is_base_of_v<monad, R>,
+                                        bind<std::decay_t<F>, std::decay_t<G>>,
+                                        fmap<std::decay_t<F>, std::decay_t<G>, R>>;
 
 }
 

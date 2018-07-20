@@ -15,7 +15,7 @@ namespace cat {
 template <class T>
 class lazy;
 
-namespace detail {
+namespace kernel {
 
 class action
 {
@@ -72,11 +72,11 @@ private:
 template <class T>
 class lazy : monad
 {
-    lazy(std::shared_ptr<detail::action> p) : p(std::move(p)) {}
+    lazy(std::shared_ptr<kernel::action> p) : p(std::move(p)) {}
 
 public:
     lazy()
-        : p(std::make_shared<detail::action>())
+        : p(std::make_shared<kernel::action>())
     {}
 
     void operator<<(T t) const {
@@ -91,7 +91,7 @@ public:
     template <class F>
     join<lazy, F, T> operator >>= (F&& f) const
     {
-        join<lazy, F, T> r(std::make_shared<detail::join_action<F, T>>(std::forward<F>(f)));
+        join<lazy, F, T> r(std::make_shared<kernel::join_action<F, T>>(std::forward<F>(f)));
         p->next = r.p;
         return r;
     }
@@ -101,10 +101,10 @@ public:
     }
 
 private:
-    friend class detail::action;
+    friend class kernel::action;
     template <class U>
     friend class lazy;
-    std::shared_ptr<detail::action> p;
+    std::shared_ptr<kernel::action> p;
 };
 
 }

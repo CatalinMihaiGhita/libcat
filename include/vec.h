@@ -38,18 +38,18 @@ public:
     join<vec, F, const T&> operator >>= (F f) const  {
         join<vec, F, const T&> v;
         for (auto&& i : p) {
-            v += f(i);
+            v << f(i);
         }
         return v;
     }
 
-    vec<T>& operator+=(T t)
+    vec<T>& operator<<(T t)
     {
         p.emplace_back(std::move(t));
         return *this;
     }
 
-    vec<T>& operator+=(vec<T> v)
+    vec<T>& operator<<(vec<T> v)
     {
         p.insert(p.end(),
                  std::move_iterator(v.p.begin()),
