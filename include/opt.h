@@ -48,18 +48,21 @@ public:
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    join<opt, F, const box<T>&> operator >>= (F f) const  {
+    join_t<opt, F, const box<T>&> operator >>= (F f) const
+    {
         if (p.operator->())
             return f(p);
         else
             return {};
     }
 
-    iter begin() const {
+    iter begin() const
+    {
         return iter{p.operator->() ? &p : nullptr};
     }
 
-    nil end() const {
+    nil end() const
+    {
         return {};
     }
 
@@ -97,18 +100,21 @@ public:
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    join<opt, F, const rc<T>&> operator >>= (F f) const  {
+    join_t<opt, F, const rc<T>&> operator >>= (F f) const
+    {
         if (p.operator->())
             return f(p);
         else
             return {};
     }
 
-    iter begin() const {
+    iter begin() const
+    {
         return iter{p.operator->() ? &p : nullptr};
     }
 
-    nil end() const {
+    nil end() const
+    {
         return {};
     }
 
@@ -145,18 +151,21 @@ public:
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    join<opt, F, const T&> operator >>= (F f) const  {
+    join_t<opt, F, const T&> operator >>= (F f) const
+    {
         if (p)
             return f(*p);
         else
             return {};
     }
 
-    iter begin() const {
+    iter begin() const
+    {
         return iter{p ? &p : nullptr};
     }
 
-    nil end() const {
+    nil end() const
+    {
         return {};
     }
 

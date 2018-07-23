@@ -76,7 +76,7 @@ struct bind
 template <typename F
          ,typename G
          ,typename R = typename fn<std::decay_t<F>>::result_type>
-using map = typename std::conditional_t<std::is_base_of_v<monad, R>,
+using map_t = typename std::conditional_t<std::is_base_of_v<monad, R>,
                                         bind<std::decay_t<F>, std::decay_t<G>>,
                                         fmap<std::decay_t<F>, std::decay_t<G>, R>>;
 
@@ -84,8 +84,8 @@ using map = typename std::conditional_t<std::is_base_of_v<monad, R>,
 
 template <typename F
          ,typename G
-         ,typename M = kernel::map<F,G>>
-M operator>>=(F&& f, G&& g)
+         ,typename M = kernel::map_t<F,G>>
+M operator >>= (F&& f, G&& g)
 {
     return M{ std::forward<F>(f), std::forward<G>(g) };
 }

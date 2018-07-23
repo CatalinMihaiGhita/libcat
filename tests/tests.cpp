@@ -30,5 +30,12 @@ int main()
         return nil{};
     };
 
+    lazy<int> i;
+    i >>= [] (int i) {
+        std::cout << i << std::endl;
+        return nil{};
+    };
+    i << 9;
+
     return 0;
 }

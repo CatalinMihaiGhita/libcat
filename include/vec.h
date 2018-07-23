@@ -35,21 +35,22 @@ public:
     constexpr vec() {}
 
     template <typename F>
-    join<vec, F, const T&> operator >>= (F f) const  {
-        join<vec, F, const T&> v;
+    decltype(auto) operator >>= (F f) const
+    {
+        join_t<vec, F, const T&> v;
         for (auto&& i : p) {
             v << f(i);
         }
         return v;
     }
 
-    vec<T>& operator<<(T t)
+    vec<T>& operator << (T t)
     {
         p.emplace_back(std::move(t));
         return *this;
     }
 
-    vec<T>& operator<<(vec<T> v)
+    vec<T>& operator << (vec<T> v)
     {
         p.insert(p.end(),
                  std::move_iterator(v.p.begin()),
@@ -57,11 +58,13 @@ public:
         return *this;
     }
 
-    iter begin() const {
+    iter begin() const
+    {
         return p.begin();
     }
 
-    iter end() const {
+    iter end() const
+    {
         return p.end();
     }
 

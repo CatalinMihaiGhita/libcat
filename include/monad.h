@@ -7,20 +7,22 @@
 
 namespace cat {
 
-template <template<class> class M, typename T>
-struct join_decay
+template <template<class> class M, class T>
+struct flatten
 {
      typedef T type;
 };
 
-template <template<class> class M, typename T>
-struct join_decay<M, M<T>>
+template <template<class> class M, class T>
+struct flatten<M, M<T>>
 {
     typedef T type;
 };
+template <template<class> class M, class T>
+using flatten_t = typename flatten<M, T>::type;
 
 template <template<class> class M, typename F, typename T>
-using join = M<typename join_decay<M, decltype(std::declval<F>()(std::declval<T>()))>::type>;
+using join_t = M<flatten_t<M, std::invoke_result_t<F,T>>>;
 
 class monad
 {
