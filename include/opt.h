@@ -19,7 +19,12 @@ template <typename T>
 using opt = any<T, nil>;
 
 template <typename T>
-class any<box<T>, nil> : monad
+class is_monad<opt<T>> : public std::true_type
+{
+};
+
+template <typename T>
+class any<box<T>, nil>
 {
 public:
     class iter
@@ -71,7 +76,7 @@ private:
 };
 
 template <typename T>
-class any<rc<T>, nil> : monad
+class any<rc<T>, nil>
 {
 public:
     class iter
@@ -123,7 +128,7 @@ private:
 };
 
 template <typename T>
-class any<T, nil> : monad
+class any<T, nil>
 {
 public:
     class iter

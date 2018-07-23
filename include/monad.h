@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <functional>
+
 namespace cat {
 
 template <template<class> class M, class T>
@@ -24,8 +26,12 @@ using flatten_t = typename flatten<M, T>::type;
 template <template<class> class M, typename F, typename T>
 using join_t = M<flatten_t<M, std::invoke_result_t<F,T>>>;
 
-class monad
+template <class T>
+class is_monad : public std::false_type
 {
 };
+
+template <class T>
+inline constexpr bool is_monad_v = is_monad<T>::value;
 
 }

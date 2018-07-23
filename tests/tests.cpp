@@ -34,6 +34,9 @@ int main()
     i >>= [] (int i) {
         std::cout << i << std::endl;
         return nil{};
+    } >>= [] (nil) {
+        std::cout << "nil continuation!!" << std::endl;
+        return nil{};
     };
     i << 9;
 

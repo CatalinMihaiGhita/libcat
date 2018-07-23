@@ -15,7 +15,7 @@
 namespace cat {
 
 template <typename T>
-class vec : monad
+class vec
 {
 public:
     class iter
@@ -70,6 +70,11 @@ public:
 
 private:
     std::vector<T> p;
+};
+
+template <typename T>
+class is_monad<vec<T>> : public std::true_type
+{
 };
 
 }

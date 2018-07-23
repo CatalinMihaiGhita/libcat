@@ -16,6 +16,11 @@ namespace cat {
 template <class T>
 using lazy = any<T, nvr>;
 
+template <typename T>
+class is_monad<lazy<T>> : public std::true_type
+{
+};
+
 namespace kernel {
 
 class abstract_action
@@ -78,7 +83,7 @@ private:
 }
 
 template <class T>
-class any<T, nvr> : monad
+class any<T, nvr>
 {
     any(std::shared_ptr<kernel::action<T>> p) : p(std::move(p)) {}
 

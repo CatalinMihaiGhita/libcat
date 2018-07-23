@@ -10,11 +10,11 @@
 namespace cat {
 namespace kernel {
 
-template <typename T>
+template <typename T, bool M>
 struct fn;
 
 template <typename R, typename... Args>
-struct fn<R(*)(Args...)>
+struct fn<R(*)(Args...), false>
 {
     typedef R result_type;
 };
@@ -23,7 +23,7 @@ template <typename T>
 struct fn_object;
 
 template <typename T>
-struct fn<decltype(&T::operator())> : public fn_object<decltype(&T::operator())>
+struct fn<T, false> : public fn_object<decltype(&T::operator())>
 {
 };
 
@@ -75,10 +75,10 @@ struct bind
 
 template <typename F
          ,typename G
-         ,typename R = typename fn<std::decay_t<F>>::result_type>
-using map_t = typename std::conditional_t<std::is_base_of_v<monad, R>,
-                                        bind<std::decay_t<F>, std::decay_t<G>>,
-                                        fmap<std::decay_t<F>, std::decay_t<G>, R>>;
+         ,typename R = typename fn<std::decay_t<F>, is_monad_v<std::decay_t<F>>>::result_type>
+using map_t = typename std::conditional_t<is_monad_v<R>,
+                                         bind<std::decay_t<F>, std::decay_t<G>>,
+                                         fmap<std::decay_t<F>, std::decay_t<G>, R>>;
 
 }
 
