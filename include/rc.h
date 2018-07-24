@@ -24,11 +24,10 @@ class rc
 public:
     template <typename U = T>
     rc(rc<U> &&t) : p(std::move(t.p)) {}
-
     template <typename... U>
     rc(std::in_place_t, U&&... t) : p(new T(std::forward<U>(t)...)) {}
-    T* operator->() const noexcept { return p.get(); }
 
+    T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
 
     rc<T> operator++() const {

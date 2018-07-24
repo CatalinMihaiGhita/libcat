@@ -33,6 +33,7 @@ public:
     };
 
     constexpr vec() {}
+    constexpr vec(std::initializer_list<T> init) : p(std::move(init)) {}
 
     template <typename F>
     decltype(auto) operator >>= (F f) const
@@ -44,17 +45,31 @@ public:
         return v;
     }
 
-    vec<T>& operator << (T t)
+    vec<T>& operator << (T&& t)
     {
         p.emplace_back(std::move(t));
         return *this;
     }
 
-    vec<T>& operator << (vec<T> v)
+    vec<T>& operator << (const T& t)
+    {
+        p.emplace_back(t);
+        return *this;
+    }
+
+    vec<T>& operator << (vec<T>&& v)
     {
         p.insert(p.end(),
                  std::move_iterator(v.p.begin()),
                  std::move_iterator(v.p.end()));
+        return *this;
+    }
+
+    vec<T>& operator << (const vec<T>& v)
+    {
+        p.insert(p.end(),
+                 v.p.begin(),
+                 v.p.end());
         return *this;
     }
 

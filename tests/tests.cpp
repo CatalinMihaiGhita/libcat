@@ -16,8 +16,7 @@ opt<std::string> free_fn(const box<std::string>& s)
 
 int main()
 {
-    vec<int> v;
-    v << 1;
+    vec<int> v{1, 2};
     v >>= [] (int i) {
         vec<float> g;
         g << 1.0f;

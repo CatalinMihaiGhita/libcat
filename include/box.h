@@ -18,11 +18,16 @@ class box
 
     constexpr box(nil) {}
 public:
+    template <typename U>
+    box(box<U>&& u) : p(std::move(u.p)) {}
     template <typename... U>
-    box(U&&... t) : p(new T(std::forward<U>(t)...)) {}
+    box(std::in_place_t, U&&... t) : p(new T(std::forward<U>(t)...)) {}
+
     T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
 private:
+    template <class U>
+    friend class box;
     std::unique_ptr<T> p;
 };
 
