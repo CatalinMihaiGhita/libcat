@@ -10,31 +10,25 @@
 namespace cat {
 namespace kernel {
 
-template <typename T, bool M>
-struct fn;
+template <typename T>
+struct fn : public fn<decltype(&T::operator())>
+{
+};
 
 template <typename R, typename... Args>
-struct fn<R(*)(Args...), false>
-{
-    typedef R result_type;
-};
-
-template <typename T>
-struct fn_object;
-
-template <typename T>
-struct fn<T, false> : public fn_object<decltype(&T::operator())>
-{
-};
-
-template <typename O, typename R, typename... Args>
-struct fn_object<R(O::*)(Args...) const>
+struct fn<R(*)(Args...)>
 {
     typedef R result_type;
 };
 
 template <typename O, typename R, typename... Args>
-struct fn_object<R(O::*)(Args...)>
+struct fn<R(O::*)(Args...) const>
+{
+    typedef R result_type;
+};
+
+template <typename O, typename R, typename... Args>
+struct fn<R(O::*)(Args...)>
 {
     typedef R result_type;
 };
@@ -73,18 +67,17 @@ struct bind
     T t; U u;
 };
 
-template <typename F
-         ,typename G
-         ,typename R = typename fn<std::decay_t<F>, is_monad_v<std::decay_t<F>>>::result_type>
+template <class F, class G,
+          class R = typename std::enable_if_t<!is_monad_v<F>,
+                                              fn<F>>::result_type>
 using map_t = typename std::conditional_t<is_monad_v<R>,
-                                         bind<std::decay_t<F>, std::decay_t<G>>,
-                                         fmap<std::decay_t<F>, std::decay_t<G>, R>>;
+                                          bind<F, G>,
+                                          fmap<F, G, R>>;
 
 }
 
-template <typename F
-         ,typename G
-         ,typename M = kernel::map_t<F,G>>
+template <class F, class G,
+          class M = kernel::map_t<std::decay_t<F>, std::decay_t<G>>>
 M operator >>= (F&& f, G&& g)
 {
     return M{ std::forward<F>(f), std::forward<G>(g) };
