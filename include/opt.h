@@ -43,9 +43,12 @@ public:
 
     constexpr any() : p(nil{}) {}
     constexpr any(nil n) : p(n) {}
+    any& operator << (nil n) { p = box<T>{n}; }
 
     template <typename U>
     any(box<U>&& u) : p(std::move(u)) {}
+    template <typename U>
+    any& operator << (box<U>&& u) { p = std::move(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -58,15 +61,8 @@ public:
             return {};
     }
 
-    iter begin() const
-    {
-        return iter{p.operator->() ? &p : nullptr};
-    }
-
-    nil end() const
-    {
-        return {};
-    }
+    iter begin() const { return iter{p.operator->() ? &p : nullptr}; }
+    nil end() const { return {}; }
 
 private:
     box<T> p;
@@ -91,6 +87,7 @@ public:
 
     constexpr any() : p(nil{}) {}
     constexpr any(nil n) : p(n) {}
+    any& operator << (nil n) { p = rc<T>{n}; }
     
     any(const any&) = delete;
     any& operator=(const any&) = delete;
@@ -98,7 +95,7 @@ public:
     template <typename U>
     any(rc<U>&& u) : p(std::move(u)) {}
     template <typename U>
-    any& operator=(rc<U>&& u) { p = std::move(u); }
+    any& operator << (rc<U>&& u) { p = std::move(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -111,19 +108,10 @@ public:
             return {};
     }
 
-    iter begin() const
-    {
-        return iter{p.operator->() ? &p : nullptr};
-    }
+    iter begin() const {return iter{p.operator->() ? &p : nullptr}; }
+    nil end() const { return {}; }
 
-    nil end() const
-    {
-        return {};
-    }
-
-    any operator++() const {
-        return ++p;
-    }
+    any operator++() const { return ++p; }
 
 private:
     rc<T> p;
@@ -148,12 +136,12 @@ public:
 
     constexpr any() {}
     constexpr any(nil) {}
+    any& operator << (nil) { p.reset(); }
 
     template <typename... U>
     any(U&&... u) : p(std::forward<U>(u)...) {}
-    template <std::size_t I, typename... U>
-    constexpr any(std::in_place_index_t<I>, U&&... u)
-        : p(std::forward<U>(u)...) {}
+    template <typename U>
+    any& operator << (U&& u) { p = std::forward(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -166,16 +154,8 @@ public:
             return {};
     }
 
-    iter begin() const
-    {
-        return iter{p ? &p : nullptr};
-    }
-
-    nil end() const
-    {
-        return {};
-    }
-
+    iter begin() const { return iter{p ? &p : nullptr}; }
+    nil end() const { return {}; }
 
 private:
     std::optional<T> p;

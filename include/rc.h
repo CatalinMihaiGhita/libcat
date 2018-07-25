@@ -33,9 +33,7 @@ public:
     T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
 
-    rc<T> operator++() const {
-        return p;
-    }
+    rc<T> operator++() const { return p; }
 
 private:
     template <typename U>

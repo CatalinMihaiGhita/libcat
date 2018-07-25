@@ -22,12 +22,12 @@ class A
 class B : public A
 {
 public:
-    B(box<A>&&){}
+    B(int, float){}
 };
 
 int main()
 {
-    box x = wrap_box<B>(wrap_box<A>());
+    box x = wrap_box<B>(0, 1);
     box<A> y = std::move(x);
 
     vec<int> v{1, 2};
@@ -42,6 +42,8 @@ int main()
         std::cout << s << std::endl;
         return nil{};
     };
+    t << wrap_rc<std::string>("first");
+    t << nil{};
 
     lazy<int> i;
     i >>= [] (int i) {
