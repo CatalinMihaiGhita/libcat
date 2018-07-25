@@ -14,7 +14,7 @@
 namespace cat {
 
 template <class T>
-using lazy = any<T, nvr>;
+using lazy = any<T, nevr>;
 
 template <typename T>
 class is_monad<lazy<T>> : public std::true_type
@@ -83,28 +83,30 @@ private:
 }
 
 template <class T>
-class any<T, nvr>
+class any<T, nevr>
 {
     any(std::shared_ptr<kernel::action<T>> p) : p(std::move(p)) {}
 
 public:
-    any()
-        : p(std::make_shared<kernel::action<T>>())
-    {}
-
+    any() : p(std::make_shared<kernel::action<T>>()) {}
     any(std::in_place_t, T t)
         : p(std::make_shared<kernel::action<T>>())
     {
         p->val = std::move(t);
     }
 
-    void operator<<(T t) const {
+    any(const any &t) = delete;
+    any& operator=(const any &t) = delete;
+
+    any& operator << (T t) {
         p->exec_next(t);
+        return *this;
     }
 
-    void operator<<(const lazy<T>& other) const
+    any& operator << (const lazy<T>& other)
     {
         other.p->next = p;
+        return *this;
     }
 
     template <class F>
@@ -119,9 +121,7 @@ public:
         return join_t<lazy, F, T>(std::move(action));
     }
 
-    ~any()
-    {
-    }
+    any& operator++() const { return p; }
 
 private:
     friend class kernel::abstract_action;
