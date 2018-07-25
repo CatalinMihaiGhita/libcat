@@ -16,14 +16,17 @@ class rc
     template <typename... U>
     friend class any;
 
+    rc(const std::shared_ptr<T> &t) : p(t) {}
     constexpr rc(nil) {}
-
-    template <typename U = T>
-    rc(const rc<U> &t) : p(t.p) {}
-
 public:
+    rc(const rc &t) = delete;
+    rc& operator=(const rc &t) = delete;
+
     template <typename U = T>
     rc(rc<U> &&t) : p(std::move(t.p)) {}
+    template <typename U = T>
+    rc& operator=(rc<U> &&t) { p = std::move(t.p); }
+
     template <typename... U>
     rc(std::in_place_t, U&&... t) : p(new T(std::forward<U>(t)...)) {}
 
@@ -31,7 +34,7 @@ public:
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
 
     rc<T> operator++() const {
-        return rc<T>(*this);
+        return p;
     }
 
 private:
@@ -43,5 +46,11 @@ private:
 
 template<class T>
 rc(T) -> rc<T>;
+
+template <typename T, typename... U>
+rc<T> wrap_rc(U&&... t)
+{
+    return rc<T>{std::in_place, std::forward<U>(t)...};
+}
 
 }

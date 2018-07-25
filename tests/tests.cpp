@@ -8,14 +8,28 @@
 
 using namespace cat;
 
-opt<std::string> free_fn(const box<std::string>& s)
+opt<std::string> free_fn(const rc<std::string>& s)
 {
     std::cout << *s << std::endl;
     return "second";
 }
 
+class A
+{
+
+};
+
+class B : public A
+{
+public:
+    B(box<A>&&){}
+};
+
 int main()
 {
+    box x = wrap_box<B>(wrap_box<A>());
+    box<A> y = std::move(x);
+
     vec<int> v{1, 2};
     v >>= [] (int i) {
         vec<float> g;
@@ -23,7 +37,7 @@ int main()
         return g;
     };
 
-    opt<box<std::string>> t = "first";
+    opt<rc<std::string>> t = wrap_rc<std::string>("first");
     t >>= free_fn >>= [] (const std::string &s) {
         std::cout << s << std::endl;
         return nil{};

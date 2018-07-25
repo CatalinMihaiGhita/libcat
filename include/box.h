@@ -25,6 +25,7 @@ public:
 
     T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
+
 private:
     template <class U>
     friend class box;
@@ -33,5 +34,11 @@ private:
 
 template<class T>
 box(T) -> box<T>;
+
+template <typename T, typename... U>
+box<T> wrap_box(U&&... t)
+{
+    return box<T>{std::in_place, std::forward<U>(t)...};
+}
 
 }

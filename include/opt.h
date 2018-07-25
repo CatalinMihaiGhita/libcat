@@ -44,11 +44,8 @@ public:
     constexpr any() : p(nil{}) {}
     constexpr any(nil n) : p(n) {}
 
-    template <typename... U>
-    any(U&&... u) : p(std::forward<U>(u)...) {}
-    template <std::size_t I, typename... U>
-    constexpr any(std::in_place_index_t<I>, U&&... u)
-        : p(std::forward<U>(u)...) {}
+    template <typename U>
+    any(box<U>&& u) : p(std::move(u)) {}
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -94,13 +91,14 @@ public:
 
     constexpr any() : p(nil{}) {}
     constexpr any(nil n) : p(n) {}
+    
+    any(const any&) = delete;
+    any& operator=(const any&) = delete;
 
-    template <typename... U>
-    any(U&&... u) : p(std::forward<U>(u)...) {}
-
-    template <std::size_t I, typename... U>
-    constexpr any(std::in_place_index_t<I>, U&&... u)
-        : p(std::forward<U>(u)...) {}
+    template <typename U>
+    any(rc<U>&& u) : p(std::move(u)) {}
+    template <typename U>
+    any& operator=(rc<U>&& u) { p = std::move(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -121,6 +119,10 @@ public:
     nil end() const
     {
         return {};
+    }
+
+    any operator++() const {
+        return ++p;
     }
 
 private:
