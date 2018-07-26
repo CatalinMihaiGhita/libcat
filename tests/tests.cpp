@@ -3,57 +3,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 #include <cat.h>
 
 using namespace cat;
 
-opt<std::string> free_fn(const rc<std::string>& s)
+TEST(Cat, Nil)
 {
-    std::cout << *s << std::endl;
-    return "second";
+    nil n1;
+    nil n2 = {};
+    n2 = n1;
+    EXPECT_EQ(sizeof(nil), 1);
+    EXPECT_TRUE(n1 == n2);
+    EXPECT_FALSE(n1 != n2);
 }
 
-class A
-{
-
-};
-
-class B : public A
-{
-public:
-    B(int, float){}
-};
-
-int main()
-{
-    box x = wrap_box<B>(0, 1);
-    box<A> y = std::move(x);
-
-    vec<int> v{1, 2};
-    v >>= [] (int i) {
-        vec<float> g;
-        g << 1.0f;
-        return g;
-    };
-
-    opt<rc<std::string>> t = wrap_rc<std::string>("first");
-    t >>= free_fn >>= [] (const std::string &s) {
-        std::cout << s << std::endl;
-        return nil{};
-    };
-    t << wrap_rc<std::string>("first");
-    t << nil{};
-
-    lazy<int> i;
-    i >>= [] (int i) {
-        std::cout << i << std::endl;
-        return nil{};
-    } >>= [] (nil) {
-        std::cout << "nil continuation!!" << std::endl;
-        return nil{};
-    };
-    i << 9;
-
-    return 0;
-}

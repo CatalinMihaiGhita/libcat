@@ -35,6 +35,13 @@ public:
     constexpr all(T&&) {}
 };
 
+constexpr bool operator<(const all<>&, const all<>&) noexcept { return false; }
+constexpr bool operator>(const all<>&, const all<>&) noexcept { return false; }
+constexpr bool operator<=(const all<>&, const all<>&) noexcept { return true; }
+constexpr bool operator>=(const all<>&, const all<>&) noexcept { return true; }
+constexpr bool operator==(const all<>&, const all<>&) noexcept { return true; }
+constexpr bool operator!=(const all<>&, const all<>&) noexcept { return false; }
+
 using nil = all<>;
 
 }
