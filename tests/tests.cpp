@@ -19,4 +19,3 @@ TEST(Cat, Nil)
     EXPECT_TRUE(n1 == n2);
     EXPECT_FALSE(n1 != n2);
 }
-

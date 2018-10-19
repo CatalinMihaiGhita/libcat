@@ -11,7 +11,7 @@
 #include <all.h>
 #include <box.h>
 #include <rc.h>
-#include <monad.h>
+#include <mnd.h>
 
 namespace cat {
 

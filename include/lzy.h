@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <monad.h>
+#include <mnd.h>
 
 #include <rc.h>
 #include <opt.h>
@@ -14,24 +14,24 @@
 namespace cat {
 
 template <class T>
-using lazy = any<T, nevr>;
+using lzy = any<T, nevr>;
 
 template <typename T>
-class is_monad<lazy<T>> : public std::true_type
+class is_monad<lzy<T>> : public std::true_type
 {
 };
 
-namespace kernel {
+namespace impl {
 
-class abstract_action
+class itask
 {
 public:
     virtual void exec(void* t) = 0;
-    virtual ~abstract_action() {};
+    virtual ~itask() {};
 };
 
 template <class T>
-class action : public abstract_action
+class task : public itask
 {
 public:
     void exec_next(T& t)
@@ -42,7 +42,7 @@ public:
             val = std::move(t);
     }
 
-    void exec_next(lazy<T>& t) const
+    void exec_next(lzy<T>& t) const
     {
         t.p->next = next;
     }
@@ -55,17 +55,17 @@ public:
             val = std::move(*static_cast<T*>(t));
     }
 
-    std::shared_ptr<abstract_action> next;
+    std::shared_ptr<itask> next;
     std::optional<T> val;
 };
 
 
 
 template <class F, class T>
-class join_action : public action<flatten_t<lazy, std::invoke_result_t<F,T>>>
+class ftask : public task<flatten_t<lzy, std::invoke_result_t<F,T>>>
 {
 public:
-    join_action(F &&f)
+    ftask(F &&f)
         : f(std::forward<F>(f))
     {
     }
@@ -85,12 +85,12 @@ private:
 template <class T>
 class any<T, nevr>
 {
-    any(std::shared_ptr<kernel::action<T>> p) : p(std::move(p)) {}
+    any(std::shared_ptr<impl::task<T>> p) : p(std::move(p)) {}
 
 public:
-    any() : p(std::make_shared<kernel::action<T>>()) {}
+    any() : p(std::make_shared<impl::task<T>>()) {}
     any(std::in_place_t, T t)
-        : p(std::make_shared<kernel::action<T>>())
+        : p(std::make_shared<impl::task<T>>())
     {
         p->val = std::move(t);
     }
@@ -103,31 +103,31 @@ public:
         return *this;
     }
 
-    any& operator << (const lazy<T>& other)
+    any& operator << (const lzy<T>& other)
     {
         other.p->next = p;
         return *this;
     }
 
     template <class F>
-    join_t<lazy, F, T> operator >>= (F&& f) const
+    join_t<lzy, F, T> operator >>= (F&& f) const
     {
-        auto action = std::make_shared<kernel::join_action<F, T>>(std::forward<F>(f));
-        p->next = action;
+        auto task = std::make_shared<impl::ftask<F, T>>(std::forward<F>(f));
+        p->next = task;
         if (p->val) {
             p->next->exec(p->val.operator->());
             p->val.reset();
         }
-        return join_t<lazy, F, T>(std::move(action));
+        return join_t<lzy, F, T>(std::move(task));
     }
 
     any& operator++() const { return p; }
 
 private:
-    friend class kernel::abstract_action;
+    friend class impl::itask;
     template <class... U>
     friend class any;
-    std::shared_ptr<kernel::action<T>> p;
+    std::shared_ptr<impl::task<T>> p;
 };
 
 }

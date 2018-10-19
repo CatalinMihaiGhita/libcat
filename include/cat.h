@@ -3,14 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <functional>
-
-#include <monad.h>
+#include <mnd.h>
 #include <fn.h>
 #include <all.h>
 #include <any.h>
 #include <box.h>
 #include <rc.h>
 #include <opt.h>
-#include <lazy.h>
+#include <lzy.h>
 #include <vec.h>

@@ -5,10 +5,10 @@
 
 #include <functional>
 
-#include <monad.h>
+#include <mnd.h>
 
 namespace cat {
-namespace kernel {
+namespace impl {
 
 template <typename T>
 struct fn : public fn<decltype(&T::operator())>
@@ -77,7 +77,7 @@ using map_t = typename std::conditional_t<is_monad_v<R>,
 }
 
 template <class F, class G,
-          class M = kernel::map_t<std::decay_t<F>, std::decay_t<G>>>
+          class M = impl::map_t<std::decay_t<F>, std::decay_t<G>>>
 M operator >>= (F&& f, G&& g)
 {
     return M{ std::forward<F>(f), std::forward<G>(g) };

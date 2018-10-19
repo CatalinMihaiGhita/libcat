@@ -32,9 +32,6 @@ private:
     std::unique_ptr<T> p;
 };
 
-template<class T>
-box(T) -> box<T>;
-
 template <typename T, typename... U>
 box<T> wrap_box(U&&... t)
 {

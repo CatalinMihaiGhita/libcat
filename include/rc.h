@@ -42,9 +42,6 @@ private:
     std::shared_ptr<T> p;
 };
 
-template<class T>
-rc(T) -> rc<T>;
-
 template <typename T, typename... U>
 rc<T> wrap_rc(U&&... t)
 {
