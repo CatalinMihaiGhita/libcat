@@ -19,3 +19,13 @@ TEST(Cat, Nil)
     EXPECT_TRUE(n1 == n2);
     EXPECT_FALSE(n1 != n2);
 }
+
+TEST(Cat, Box)
+{
+    struct mock {
+        int i;
+    };
+    box<mock> s = wrap_box<mock>(0);
+    EXPECT_EQ(s->i, 0);
+    EXPECT_EQ((*s).i, 0);
+}
