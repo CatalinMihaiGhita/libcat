@@ -9,10 +9,38 @@ with lesser undefined behaviour.
 
 ```C++
 
-all<A,B,...> = (A, B, ...)
-all<> = nil = ()
-any<A,B,...> = A | B | ...
-any<> = nevr = Void
+all<A, B, ...> ~ (A, B, ...)
+all<> = nil ~ ()
+any<A, B, ...> ~ A | B | ...
+any<> = nevr ~ Void
+
+```
+
+### Memory Management Types
+
+```C++
+
+box<A> ~ std::unique_ptr<A>, but never nullptr
+rc<A> ~ std::shared_ptr<A>, but never nullptr
+
+```
+
+### Monad Types
+
+```C++
+
+opt<A> = A | nil
+lzy<A> = A | nevr
+vec<A> = (A, ...) | nil
+
+```
+
+### Monad Types + Memory Management Types
+
+```C++
+
+opt<box<A>> = box<A> | nil ~ std::unique_ptr<A>
+opt<rc<A>> = rc<A> | nil ~ std::shared_ptr<A>
 
 ```
 
