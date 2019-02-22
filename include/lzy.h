@@ -14,7 +14,7 @@
 namespace cat {
 
 template <class T>
-using lzy = any<T, nevr>;
+using lzy = any<T, nvr>;
 
 template <typename T>
 class is_monad<lzy<T>> : public std::true_type
@@ -83,7 +83,7 @@ private:
 }
 
 template <class T>
-class any<T, nevr>
+class any<T, nvr>
 {
     any(std::shared_ptr<impl::task<T>> p) : p(std::move(p)) {}
 
@@ -106,6 +106,10 @@ public:
     any& operator << (const lzy<T>& other)
     {
         other.p->next = p;
+        if (other.p->val) {
+            p->exec_next(*other.p->val);
+            other.p->val.reset();
+        }
         return *this;
     }
 

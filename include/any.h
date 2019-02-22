@@ -48,6 +48,6 @@ constexpr bool operator>=(const any<>&, const any<>&) noexcept { return false; }
 constexpr bool operator==(const any<>&, const any<>&) noexcept { return false; }
 constexpr bool operator!=(const any<>&, const any<>&) noexcept { return false; }
 
-using nevr = any<>;
+using nvr = any<>;
 
 }

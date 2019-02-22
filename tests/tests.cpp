@@ -29,3 +29,40 @@ TEST(Cat, Box)
     EXPECT_EQ(s->i, 0);
     EXPECT_EQ((*s).i, 0);
 }
+
+TEST(Cat, Lzy)
+{
+    lzy<int> l{std::in_place, 100};
+    l >>= [] (int t) {
+           EXPECT_EQ(t, 100);
+           return nil{};
+    };
+
+    lzy<int> l2;
+    l2 >>= [] (int t){
+        static int tries = 1;
+        switch (tries) {
+        case 1:
+            EXPECT_EQ(t, 55);
+            break;
+        case 2:
+            EXPECT_EQ(t, 66);
+            break;
+        case 3:
+            EXPECT_EQ(t, 77);
+            break;
+        default: {
+            EXPECT_TRUE(false);
+            break;
+            }
+        }
+        ++tries;
+        return nil{};
+    };
+    l2 << 55;
+    l2 << 66;
+
+    lzy<int> l3{std::in_place, 77};
+    l2 << l3;
+    l2 << l3;
+}
