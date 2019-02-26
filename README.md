@@ -8,11 +8,12 @@ with lesser undefined behaviour.
 ### Algebraic Types
 
 ```C++
-
-all<A, B, ...> ~ (A, B, ...)
-all<> = nil ~ ()
-any<A, B, ...> ~ A | B | ...
-any<> = nevr ~ Void
+Product types:
+all<A, B, ...> ~ Haskell (A, B, ...)
+all<> = nil ~ Haskell ()
+Sum types:
+any<A, B, ...> ~ Haskell A | B | ...
+any<> = nvr ~ Haskell Void
 
 ```
 
@@ -20,8 +21,8 @@ any<> = nevr ~ Void
 
 ```C++
 
-box<A> ~ std::unique_ptr<A>, but never nullptr
-rc<A> ~ std::shared_ptr<A>, but never nullptr
+box<A> ~ C++ std::unique_ptr<A>, but never nullptr
+rc<A> ~ C++ std::shared_ptr<A>, but never nullptr
 
 ```
 
@@ -39,8 +40,8 @@ vec<A> = (A, ...) | nil
 
 ```C++
 
-opt<box<A>> = box<A> | nil ~ std::unique_ptr<A>
-opt<rc<A>> = rc<A> | nil ~ std::shared_ptr<A>
+opt<box<A>> = box<A> | nil ~ C++ std::unique_ptr<A>
+opt<rc<A>> = rc<A> | nil ~ C++ std::shared_ptr<A>
 
 ```
 
