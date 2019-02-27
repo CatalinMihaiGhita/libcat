@@ -41,18 +41,29 @@ rc<A>
 
 ### Monad Types
 
+The optional type A | nil
 ```C++
-opt<A> = A | nil
-lzy<A> = A | nevr
-vec<A> = (A, ...) | nil
+opt<A> = any<A, nil> 
+```
 
+The lazy type A | nvr
+```C++
+lzy<A> = any<A, nvr>
+```
+
+The vector type (A, ...) | nil
+```C++
+vec<A>
 ```
 
 ### Monad Types + Memory Management Types
 
+The unique_ptr equivalent box<A> | nil
 ```C++
-opt<box<A>> = box<A> | nil ~ C++ std::unique_ptr<A>
-opt<rc<A>> = rc<A> | nil ~ C++ std::shared_ptr<A>
-
+opt<box<A>>
 ```
 
+The shared_ptr equivalent rc<A> | nil
+```C++  
+opt<rc<A>> = rc<A>
+```
