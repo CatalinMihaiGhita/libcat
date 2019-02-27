@@ -8,7 +8,7 @@ with lesser undefined behaviour.
 ### Algebraic Types
 
 #### Product types
-The tuple type (A, B, ...)
+The tuple type: (A, B, ...)
 ```C++
 all<A, B, ...>
 ```
@@ -18,7 +18,7 @@ nil = all<>
 ```
 
 #### Sum types
-The variant type A | B | ...
+The variant type: A | B | ...
 ```C++
 any<A, B, ...>
 ```
@@ -41,12 +41,12 @@ rc<A>
 
 ### Monad Types
 
-The optional type A | nil
+The optional type: A | nil
 ```C++
 opt<A> = any<A, nil> 
 ```
 
-The lazy type A | nvr
+The lazy type: A | nvr
 ```C++
 lzy<A> = any<A, nvr>
 ```
@@ -58,12 +58,12 @@ vec<A>
 
 ### Monad Types + Memory Management Types
 
-The unique_ptr equivalent box<A> | nil
+The unique_ptr equivalent: box<A> | nil
 ```C++
 opt<box<A>>
 ```
 
-The shared_ptr equivalent rc<A> | nil
+The shared_ptr equivalent: rc<A> | nil
 ```C++  
 opt<rc<A>> = rc<A>
 ```
