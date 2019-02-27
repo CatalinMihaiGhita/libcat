@@ -7,29 +7,41 @@ with lesser undefined behaviour.
 
 ### Algebraic Types
 
+#### Product types
+The tuple type (A, B, ...)
 ```C++
-Product types:
-all<A, B, ...> ~ Haskell (A, B, ...)
-all<> = nil ~ Haskell ()
-Sum types:
-any<A, B, ...> ~ Haskell A | B | ...
-any<> = nvr ~ Haskell Void
+all<A, B, ...>
+```
+The unit type ()
+```C++
+nil = all<>
+```
 
+#### Sum types
+The variant type A | B | ...
+```C++
+any<A, B, ...>
+```
+The zero type
+```C++
+nvr = any<>
 ```
 
 ### Memory Management Types
 
+A unique_ptr<A> equivalent, but never nullptr
 ```C++
-
-box<A> ~ C++ std::unique_ptr<A>, but never nullptr
-rc<A> ~ C++ std::shared_ptr<A>, but never nullptr
-
+box<A>
+```
+  
+A shared_ptr<A> equivalent, but never nullptr
+```C++
+rc<A> 
 ```
 
 ### Monad Types
 
 ```C++
-
 opt<A> = A | nil
 lzy<A> = A | nevr
 vec<A> = (A, ...) | nil
@@ -39,7 +51,6 @@ vec<A> = (A, ...) | nil
 ### Monad Types + Memory Management Types
 
 ```C++
-
 opt<box<A>> = box<A> | nil ~ C++ std::unique_ptr<A>
 opt<rc<A>> = rc<A> | nil ~ C++ std::shared_ptr<A>
 
