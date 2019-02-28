@@ -16,6 +16,12 @@ namespace cat {
 template <class T>
 using lzy = any<T, nvr>;
 
+template <class T>
+struct flatten<lzy, lzy<T>>
+{
+    typedef T type;
+};
+
 template <typename T>
 class is_monad<lzy<T>> : public std::true_type
 {
@@ -27,7 +33,7 @@ class itask
 {
 public:
     virtual void exec(void* t) = 0;
-    virtual ~itask() {};
+    virtual ~itask() {}
 };
 
 template <class T>
@@ -44,7 +50,16 @@ public:
 
     void exec_next(lzy<T>& t) const
     {
-        t.p->next = next;
+        t.p->join(next);
+    }
+
+    void join(std::shared_ptr<itask> other)
+    {
+        next = std::move(other);
+        if (val) {
+            next->exec(val.operator->());
+            val.reset();
+        }
     }
 
     void exec(void* t) override
@@ -105,11 +120,7 @@ public:
 
     any& operator << (const lzy<T>& other)
     {
-        other.p->next = p;
-        if (other.p->val) {
-            p->exec_next(*other.p->val);
-            other.p->val.reset();
-        }
+        other.p->join(p);
         return *this;
     }
 
@@ -117,21 +128,23 @@ public:
     join_t<lzy, F, T> operator >>= (F&& f) const
     {
         auto task = std::make_shared<impl::ftask<F, T>>(std::forward<F>(f));
-        p->next = task;
-        if (p->val) {
-            p->next->exec(p->val.operator->());
-            p->val.reset();
-        }
+        p->join(task);
         return join_t<lzy, F, T>(std::move(task));
     }
 
     any& operator++() const { return p; }
 
 private:
-    friend class impl::itask;
+    friend class impl::task<T>;
     template <class... U>
     friend class any;
     std::shared_ptr<impl::task<T>> p;
 };
+
+template <typename T, typename... U>
+lzy<T> wrap_lzy(U&&... t)
+{
+    return {std::in_place, std::forward<U>(t)...};
+}
 
 }

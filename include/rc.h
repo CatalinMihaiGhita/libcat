@@ -45,7 +45,7 @@ private:
 template <typename T, typename... U>
 rc<T> wrap_rc(U&&... t)
 {
-    return rc<T>{std::in_place, std::forward<U>(t)...};
+    return {std::in_place, std::forward<U>(t)...};
 }
 
 }

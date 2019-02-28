@@ -5,7 +5,6 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <cat.h>
 
 using namespace cat;
@@ -32,14 +31,14 @@ TEST(Cat, Box)
 
 TEST(Cat, Lzy)
 {
-    lzy<int> l{std::in_place, 100};
+    auto l = wrap_lzy<int>(100);
     l >>= [] (int t) {
            EXPECT_EQ(t, 100);
            return nil{};
     };
 
     lzy<int> l2;
-    l2 >>= [] (int t){
+    auto f = l2 >>= [] (int t){
         static int tries = 1;
         switch (tries) {
         case 1:
@@ -62,7 +61,7 @@ TEST(Cat, Lzy)
     l2 << 55;
     l2 << 66;
 
-    lzy<int> l3{std::in_place, 77};
+    auto l3 = wrap_lzy<int>(77);
     l2 << l3;
     l2 << l3;
 }

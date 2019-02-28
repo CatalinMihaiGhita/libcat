@@ -20,6 +20,7 @@ struct flatten<M, M<T>>
 {
     typedef T type;
 };
+
 template <template<class> class M, class T>
 using flatten_t = typename flatten<M, T>::type;
 

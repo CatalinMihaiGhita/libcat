@@ -139,7 +139,7 @@ public:
     any& operator << (nil) { p.reset(); }
 
     template <typename... U>
-    any(U&&... u) : p(std::forward<U>(u)...) {}
+    any(std::in_place_t, U&&... u) : p(std::forward<U>(u)...) {}
     template <typename U>
     any& operator << (U&& u) { p = std::forward(u); }
 
@@ -160,5 +160,11 @@ public:
 private:
     std::optional<T> p;
 };
+
+template <typename T, typename... U>
+opt<T> wrap_opt(U&&... t)
+{
+    return {std::in_place, std::forward<U>(t)...};
+}
 
 }

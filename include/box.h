@@ -35,7 +35,7 @@ private:
 template <typename T, typename... U>
 box<T> wrap_box(U&&... t)
 {
-    return box<T>{std::in_place, std::forward<U>(t)...};
+    return {std::in_place, std::forward<U>(t)...};
 }
 
 }
