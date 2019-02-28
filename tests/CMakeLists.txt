@@ -1,6 +1,4 @@
-
 enable_testing()
-add_definitions(-std=c++17 -O3)
 
 find_package(PkgConfig)
 pkg_check_modules(GTEST REQUIRED)

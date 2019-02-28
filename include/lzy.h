@@ -29,66 +29,69 @@ class is_monad<lzy<T>> : public std::true_type
 
 namespace impl {
 
-class itask
+class abstract_cell
 {
 public:
-    virtual void exec(void* t) = 0;
-    virtual ~itask() {}
+    virtual void take(void* t) = 0;
+    virtual ~abstract_cell() {}
 };
 
 template <class T>
-class task : public itask
+class cell : public abstract_cell
 {
 public:
-    void exec_next(T& t)
+    void push(T&& t)
     {
         if (next)
-            next->exec(&t);
+            next->take(&t);
         else
             val = std::move(t);
     }
 
-    void exec_next(lzy<T>& t) const
+    void push(lzy<T>&& t) const
     {
         t.p->join(next);
     }
 
-    void join(std::shared_ptr<itask> other)
+    void push(const lzy<T>& t) const
     {
-        next = std::move(other);
-        if (val) {
-            next->exec(val.operator->());
-            val.reset();
+        t.p->join(next);
+    }
+
+    void join(const std::shared_ptr<abstract_cell>& other)
+    {
+        if (other) {
+            next = other;
+            if (val) {
+                next->take(val.operator->());
+                val.reset();
+            }
         }
     }
 
-    void exec(void* t) override
+    void take(void* t) override
     {
-        if (next)
-            next->exec(t);
-        else
-            val = std::move(*static_cast<T*>(t));
+        push(std::move(*static_cast<T*>(t)));
     }
 
-    std::shared_ptr<itask> next;
     std::optional<T> val;
+    std::shared_ptr<abstract_cell> next;
 };
 
 
 
 template <class F, class T>
-class ftask : public task<flatten_t<lzy, std::invoke_result_t<F,T>>>
+class susp_cell : public cell<flatten_t<lzy, std::invoke_result_t<F,T>>>
 {
 public:
-    ftask(F &&f)
+    susp_cell(F &&f)
         : f(std::forward<F>(f))
     {
     }
 
-    void exec(void* t) override
+    void take(void* t) override
     {
-        auto rez = f(std::move(*static_cast<T*>(t)));
-        this->exec_next(rez);
+        this->push(f(std::move(*static_cast<T*>(t))));
     }
 
 private:
@@ -100,12 +103,12 @@ private:
 template <class T>
 class any<T, nvr>
 {
-    any(std::shared_ptr<impl::task<T>> p) : p(std::move(p)) {}
+    any(std::shared_ptr<impl::cell<T>> p) : p(std::move(p)) {}
 
 public:
-    any() : p(std::make_shared<impl::task<T>>()) {}
+    any() : p(std::make_shared<impl::cell<T>>()) {}
     any(std::in_place_t, T t)
-        : p(std::make_shared<impl::task<T>>())
+        : p(std::make_shared<impl::cell<T>>())
     {
         p->val = std::move(t);
     }
@@ -114,31 +117,37 @@ public:
     any& operator=(const any &t) = delete;
 
     any& operator << (T t) {
-        p->exec_next(t);
+        p->push(std::move(t));
         return *this;
     }
 
     any& operator << (const lzy<T>& other)
     {
-        other.p->join(p);
+        p->push(other);
+        return *this;
+    }
+
+    any& operator << (lzy<T>&& other)
+    {
+        p->push(std::move(other));
         return *this;
     }
 
     template <class F>
     join_t<lzy, F, T> operator >>= (F&& f) const
     {
-        auto task = std::make_shared<impl::ftask<F, T>>(std::forward<F>(f));
-        p->join(task);
-        return join_t<lzy, F, T>(std::move(task));
+        auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
+        p->join(scell);
+        return join_t<lzy, F, T>(std::move(scell));
     }
 
     any& operator++() const { return p; }
 
 private:
-    friend class impl::task<T>;
+    friend class impl::cell<T>;
     template <class... U>
     friend class any;
-    std::shared_ptr<impl::task<T>> p;
+    std::shared_ptr<impl::cell<T>> p;
 };
 
 template <typename T, typename... U>

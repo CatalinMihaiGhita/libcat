@@ -29,6 +29,11 @@ TEST(Cat, Box)
     EXPECT_EQ((*s).i, 0);
 }
 
+lzy<float> generate()
+{
+    return {std::in_place, 10.0f};
+}
+
 TEST(Cat, Lzy)
 {
     auto l = wrap_lzy<int>(100);
@@ -56,7 +61,7 @@ TEST(Cat, Lzy)
             }
         }
         ++tries;
-        return nil{};
+        return generate();
     };
     l2 << 55;
     l2 << 66;
@@ -64,4 +69,9 @@ TEST(Cat, Lzy)
     auto l3 = wrap_lzy<int>(77);
     l2 << l3;
     l2 << l3;
+
+    f >>= [] (float f) {
+         EXPECT_EQ(f, 10.0f);
+         return nil{};
+    };
 }
