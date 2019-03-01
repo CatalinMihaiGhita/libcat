@@ -79,12 +79,12 @@ public:
         return *this;
     }
 
-    iter begin() const
+    iter begin()
     {
         return p.begin();
     }
 
-    iter end() const
+    iter end()
     {
         return p.end();
     }

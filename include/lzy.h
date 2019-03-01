@@ -58,10 +58,10 @@ public:
         t.p->join(next);
     }
 
-    void join(const std::shared_ptr<abstract_cell>& other)
+    void join(std::shared_ptr<abstract_cell> other)
     {
         if (other) {
-            next = other;
+            next = std::move(other);
             if (val) {
                 next->take(val.operator->());
                 val.reset();
@@ -152,8 +152,7 @@ public:
     {
         using lzy_t = join_t<lzy, F, const T&>;
         if constexpr (std::is_void_v<lzy_t>) {
-            auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
-            p->join(scell);
+            p->join(std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f)));
         } else {
             auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
             p->join(scell);

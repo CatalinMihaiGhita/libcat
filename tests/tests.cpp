@@ -24,6 +24,13 @@ TEST(Cat, Nil)
     EXPECT_FALSE(n1 != n2);
 }
 
+nvr test() { throw std::bad_exception{}; }
+
+TEST(Cat, Nvr)
+{
+    EXPECT_THROW(test(), std::bad_exception);
+}
+
 TEST(Cat, Box)
 {
     box<mock> s{wrap_box<mock>(0)};
@@ -119,4 +126,15 @@ TEST(Cat, Lzy)
     l2 << l3;
 
     EXPECT_EQ(executed, 3);
+}
+
+TEST(Cat, Vec)
+{
+    vec<int> v{1, 2, 3, 4, 5};
+    auto new_v = v >>= [] (int i) {
+        return i * 2;
+    };
+    for (auto&& i : new_v) {
+        EXPECT_EQ(i % 2, 0);
+    }
 }
