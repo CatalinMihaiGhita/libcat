@@ -24,8 +24,11 @@ struct flatten<M, M<T>>
 template <template<class> class M, class T>
 using flatten_t = typename flatten<M, T>::type;
 
+template <template<class> class M, typename R>
+using flatten_or_void_t = std::conditional_t<std::is_void_v<R>, void, M<flatten_t<M, R>>>;
+
 template <template<class> class M, typename F, typename T>
-using join_t = M<flatten_t<M, std::invoke_result_t<F,T>>>;
+using join_t = flatten_or_void_t<M, std::invoke_result_t<F,T>>;
 
 template <class T>
 class is_monad : public std::false_type

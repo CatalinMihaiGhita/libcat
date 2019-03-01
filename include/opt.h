@@ -55,10 +55,16 @@ public:
     template <typename F>
     join_t<opt, F, const box<T>&> operator >>= (F f) const
     {
-        if (p.operator->())
-            return f(p);
-        else
-            return {};
+        if constexpr (std::is_void_v<join_t<opt, F, const box<T>&>>) {
+            if (p.operator->()) {
+                f(p);
+            }
+        } else {
+            if (p.operator->())
+                return f(p);
+            else
+                return {};
+        }
     }
 
     iter begin() const { return iter{p.operator->() ? &p : nullptr}; }
@@ -102,10 +108,16 @@ public:
     template <typename F>
     join_t<opt, F, const rc<T>&> operator >>= (F f) const
     {
-        if (p.operator->())
-            return f(p);
-        else
-            return {};
+        if constexpr (std::is_void_v<join_t<opt, F, const rc<T>&>>) {
+            if (p.operator->()) {
+                f(p);
+            }
+        } else {
+            if (p.operator->())
+                return f(p);
+            else
+                return {};
+        }
     }
 
     iter begin() const {return iter{p.operator->() ? &p : nullptr}; }
@@ -139,19 +151,26 @@ public:
     any& operator << (nil) { p.reset(); }
 
     template <typename... U>
-    any(std::in_place_t, U&&... u) : p(std::forward<U>(u)...) {}
+    any(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
     template <typename U>
     any& operator << (U&& u) { p = std::forward(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    join_t<opt, F, const T&> operator >>= (F f) const
+    decltype (auto) operator >>= (F f) const
     {
-        if (p)
-            return f(*p);
-        else
-            return {};
+        using opt_t = join_t<opt, F, const T&>;
+        if constexpr (std::is_void_v<opt_t>) {
+            if (p) {
+                f(*p);
+            }
+        } else {
+            if (p)
+                return opt_t{std::in_place, f(*p)};
+            else
+                return opt_t{};
+        }
     }
 
     iter begin() const { return iter{p ? &p : nullptr}; }

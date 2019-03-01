@@ -9,6 +9,11 @@
 
 using namespace cat;
 
+struct mock {
+    mock(int i) : i{i} {}
+    int i;
+};
+
 TEST(Cat, Nil)
 {
     nil n1;
@@ -21,12 +26,49 @@ TEST(Cat, Nil)
 
 TEST(Cat, Box)
 {
-    struct mock {
-        int i;
-    };
-    box<mock> s = wrap_box<mock>(0);
+    box<mock> s{wrap_box<mock>(0)};
     EXPECT_EQ(s->i, 0);
     EXPECT_EQ((*s).i, 0);
+    box<mock> o{std::move(s)};
+}
+
+TEST(Cat, Rc)
+{
+    rc<mock> s{wrap_rc<mock>(0)};
+    EXPECT_EQ(s->i, 0);
+    EXPECT_EQ((*s).i, 0);
+    rc<mock> o{++s};
+}
+
+TEST(Cat, Opt)
+{
+    opt<mock> s{wrap_opt<mock>(0)};
+    auto new_opt = s >>= [] (const mock& s) {
+        EXPECT_EQ(s.i, 0);
+        return 0;
+    } >>= [] (int i) {
+       EXPECT_EQ(i, 0);
+       return i + 1;
+    };
+    new_opt >>= [] (int i) {
+        EXPECT_EQ(i, 1);
+    };
+}
+
+TEST(Cat, OptBox)
+{
+    opt<box<mock>> s{wrap_box<mock>(0)};
+    s >>= [] (const box<mock>& s) {
+        EXPECT_EQ(s->i, 0);
+    };
+}
+
+TEST(Cat, OptRc)
+{
+    opt<rc<mock>> s{wrap_rc<mock>(0)};
+    s >>= [] (const rc<mock>& s) {
+        EXPECT_EQ(s->i, 0);
+    };
 }
 
 lzy<float> generate()
@@ -39,7 +81,6 @@ TEST(Cat, Lzy)
     auto l = wrap_lzy<int>(100);
     l >>= [] (int t) {
            EXPECT_EQ(t, 100);
-           return nil{};
     };
 
     lzy<int> l2;
@@ -63,6 +104,13 @@ TEST(Cat, Lzy)
         ++tries;
         return generate();
     };
+
+    int executed = 0;
+    f >>= [&] (float f) {
+         EXPECT_EQ(f, 10.0f);
+         ++executed;
+    };
+
     l2 << 55;
     l2 << 66;
 
@@ -70,8 +118,5 @@ TEST(Cat, Lzy)
     l2 << l3;
     l2 << l3;
 
-    f >>= [] (float f) {
-         EXPECT_EQ(f, 10.0f);
-         return nil{};
-    };
+    EXPECT_EQ(executed, 3);
 }

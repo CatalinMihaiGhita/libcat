@@ -79,6 +79,10 @@ public:
 };
 
 
+template <>
+class cell<void> : public abstract_cell
+{
+};
 
 template <class F, class T>
 class susp_cell : public cell<flatten_t<lzy, std::invoke_result_t<F,T>>>
@@ -91,7 +95,11 @@ public:
 
     void take(void* t) override
     {
-        this->push(f(std::move(*static_cast<T*>(t))));
+        if constexpr (std::is_void_v<flatten_t<lzy, std::invoke_result_t<F,T>>>) {
+            f(*static_cast<T*>(t));
+        } else {
+            this->push(f(*static_cast<T*>(t)));
+        }
     }
 
 private:
@@ -107,10 +115,16 @@ class any<T, nvr>
 
 public:
     any() : p(std::make_shared<impl::cell<T>>()) {}
-    any(std::in_place_t, T t)
+    any(std::in_place_t, T&& t)
         : p(std::make_shared<impl::cell<T>>())
     {
         p->val = std::move(t);
+    }
+
+    any(std::in_place_t, const T& t)
+        : p(std::make_shared<impl::cell<T>>())
+    {
+        p->val = t;
     }
 
     any(const any &t) = delete;
@@ -134,11 +148,17 @@ public:
     }
 
     template <class F>
-    join_t<lzy, F, T> operator >>= (F&& f) const
+    decltype (auto) operator >>= (F&& f) const
     {
-        auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
-        p->join(scell);
-        return join_t<lzy, F, T>(std::move(scell));
+        using lzy_t = join_t<lzy, F, const T&>;
+        if constexpr (std::is_void_v<lzy_t>) {
+            auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
+            p->join(scell);
+        } else {
+            auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
+            p->join(scell);
+            return lzy_t{std::move(scell)};
+        }
     }
 
     any& operator++() const { return p; }
