@@ -75,61 +75,6 @@ private:
 };
 
 template <typename T>
-class any<rc<T>, nil>
-{
-public:
-    class iter
-    {
-    public:
-        const rc<T>& operator*() const { return *p; }
-        bool operator!=(nil) const { return p != nullptr; }
-        bool operator==(nil) const { return p == nullptr; }
-        void operator++() { p = nullptr; }
-    private:
-        iter(const rc<T>* p) : p(p) {}
-        const rc<T>* p;
-        friend class any;
-    };
-
-    constexpr any() : p(nil{}) {}
-    constexpr any(nil n) : p(n) {}
-    any& operator << (nil n) { p = rc<T>{n}; }
-    
-    any(const any&) = delete;
-    any& operator=(const any&) = delete;
-
-    template <typename U>
-    any(rc<U>&& u) : p(std::move(u)) {}
-    template <typename U>
-    any& operator << (rc<U>&& u) { p = std::move(u); }
-
-    constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
-
-    template <typename F>
-    join_t<opt, F, const rc<T>&> operator >>= (F f) const
-    {
-        if constexpr (std::is_void_v<join_t<opt, F, const rc<T>&>>) {
-            if (p.operator->()) {
-                f(p);
-            }
-        } else {
-            if (p.operator->())
-                return f(p);
-            else
-                return {};
-        }
-    }
-
-    iter begin() const {return iter{p.operator->() ? &p : nullptr}; }
-    nil end() const { return {}; }
-
-    any operator++() const { return ++p; }
-
-private:
-    rc<T> p;
-};
-
-template <typename T>
 class any<T, nil>
 {
 public:

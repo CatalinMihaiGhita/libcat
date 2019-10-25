@@ -31,12 +31,18 @@ TEST(Cat, Nvr)
     EXPECT_THROW(test(), std::bad_exception);
 }
 
+void test_box(box<mock> b)
+{
+    EXPECT_EQ(b->i, 0);
+    EXPECT_EQ((*b).i, 0);
+}
+
 TEST(Cat, Box)
 {
     box<mock> s{wrap_box<mock>(0)};
     EXPECT_EQ(s->i, 0);
     EXPECT_EQ((*s).i, 0);
-    box<mock> o{std::move(s)};
+    test_box(std::move(s));
 }
 
 TEST(Cat, Rc)
@@ -45,6 +51,18 @@ TEST(Cat, Rc)
     EXPECT_EQ(s->i, 0);
     EXPECT_EQ((*s).i, 0);
     rc<mock> o{++s};
+    EXPECT_EQ(o->i, 0);
+    EXPECT_EQ((*o).i, 0);
+}
+
+TEST(Cat, Lnk)
+{
+    lnk<mock> s{wrap_lnk<mock>(0)};
+    EXPECT_EQ(s->i, 0);
+    EXPECT_EQ((*s).i, 0);
+    lnk<mock> o{s};
+    EXPECT_EQ(o->i, 0);
+    EXPECT_EQ((*o).i, 0);
 }
 
 TEST(Cat, Opt)
@@ -70,12 +88,17 @@ TEST(Cat, OptBox)
     };
 }
 
-TEST(Cat, OptRc)
+TEST(Cat, Wk)
 {
-    opt<rc<mock>> s{wrap_rc<mock>(0)};
+    auto owner = wrap_rc<mock>(0);
+    wk<mock> s{++owner};
     s >>= [] (const rc<mock>& s) {
-        EXPECT_EQ(s->i, 0);
+        EXPECT_EQ(s->i++, 0);
     };
+    for (auto&& i : s) {
+        EXPECT_EQ(i->i++, 1);
+    }
+    EXPECT_EQ(owner->i, 2);
 }
 
 lzy<float> generate()
@@ -124,6 +147,8 @@ TEST(Cat, Lzy)
     auto l3 = wrap_lzy<int>(77);
     l2 << l3;
     l2 << l3;
+
+    auto l4{++l3};
 
     EXPECT_EQ(executed, 3);
 }

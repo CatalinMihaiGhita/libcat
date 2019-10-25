@@ -160,7 +160,7 @@ public:
         }
     }
 
-    any& operator++() const { return p; }
+    any operator++() const { return p; }
 
 private:
     friend class impl::cell<T>;

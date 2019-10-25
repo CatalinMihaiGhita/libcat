@@ -19,8 +19,11 @@ class rc
     rc(const std::shared_ptr<T> &t) : p(t) {}
     constexpr rc(nil) {}
 public:
-    rc(const rc &t) = delete;
-    rc& operator=(const rc &t) = delete;
+
+    template <typename U = T>
+    rc(const rc<U> &) = delete;
+    template <typename U = T>
+    rc& operator=(rc<U> &) = delete;
 
     template <typename U = T>
     rc(rc<U> &&t) : p(std::move(t.p)) {}

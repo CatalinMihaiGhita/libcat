@@ -39,6 +39,11 @@ A shared_ptr<A> equivalent, but never nullptr
 rc<A> 
 ```
 
+Memory management of A with a linked list
+```C++
+lnk<A>
+```
+
 ### Monad Types
 
 The optional type: A | nil
@@ -63,7 +68,7 @@ The unique_ptr equivalent: box<A> | nil
 opt<box<A>>
 ```
 
-The shared_ptr equivalent: rc<A> | nil
-```C++  
-opt<rc<A>> = rc<A>
+The weak_ptr equivalent: rc<A> | nil
+```C++
+wk<A> = opt<rc<A>>
 ```
