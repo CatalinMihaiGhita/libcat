@@ -14,16 +14,16 @@
 namespace cat {
 
 template <class T>
-using lzy = any<T, nvr>;
+using lazy = any<T, nvr>;
 
 template <class T>
-struct flatten<lzy, lzy<T>>
+struct flatten<lazy, lazy<T>>
 {
     typedef T type;
 };
 
 template <typename T>
-class is_monad<lzy<T>> : public std::true_type
+class is_monad<lazy<T>> : public std::true_type
 {
 };
 
@@ -48,12 +48,12 @@ public:
             val = std::move(t);
     }
 
-    void push(lzy<T>&& t) const
+    void push(lazy<T>&& t) const
     {
         t.p->join(next);
     }
 
-    void push(const lzy<T>& t) const
+    void push(const lazy<T>& t) const
     {
         t.p->join(next);
     }
@@ -85,7 +85,7 @@ class cell<void> : public abstract_cell
 };
 
 template <class F, class T>
-class susp_cell : public cell<flatten_t<lzy, std::invoke_result_t<F,T>>>
+class susp_cell : public cell<flatten_t<lazy, std::invoke_result_t<F,T>>>
 {
 public:
     susp_cell(F &&f)
@@ -95,7 +95,7 @@ public:
 
     void take(void* t) override
     {
-        if constexpr (std::is_void_v<flatten_t<lzy, std::invoke_result_t<F,T>>>) {
+        if constexpr (std::is_void_v<flatten_t<lazy, std::invoke_result_t<F,T>>>) {
             f(*static_cast<T*>(t));
         } else {
             this->push(f(*static_cast<T*>(t)));
@@ -135,13 +135,13 @@ public:
         return *this;
     }
 
-    any& operator << (const lzy<T>& other)
+    any& operator << (const lazy<T>& other)
     {
         p->push(other);
         return *this;
     }
 
-    any& operator << (lzy<T>&& other)
+    any& operator << (lazy<T>&& other)
     {
         p->push(std::move(other));
         return *this;
@@ -150,13 +150,13 @@ public:
     template <class F>
     decltype (auto) operator >>= (F&& f) const
     {
-        using lzy_t = join_t<lzy, F, const T&>;
-        if constexpr (std::is_void_v<lzy_t>) {
+        using lazy_t = join_t<lazy, F, const T&>;
+        if constexpr (std::is_void_v<lazy_t>) {
             p->join(std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f)));
         } else {
             auto scell = std::make_shared<impl::susp_cell<F, T>>(std::forward<F>(f));
             p->join(scell);
-            return lzy_t{std::move(scell)};
+            return lazy_t{std::move(scell)};
         }
     }
 
@@ -170,7 +170,7 @@ private:
 };
 
 template <typename T, typename... U>
-lzy<T> wrap_lzy(U&&... t)
+lazy<T> wrap_lazy(U&&... t)
 {
     return {std::in_place, std::forward<U>(t)...};
 }

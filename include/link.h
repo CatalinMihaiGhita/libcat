@@ -41,30 +41,30 @@ namespace impl {
 }
 
 template <class T>
-class lnk
+class link
 {
     template<class U>
-    friend class lnk;
+    friend class link;
 
     T* p;
     impl::node n;
 
 public:
 	template<class... Args>
-    lnk(std::in_place_t, Args&&... args)
+    link(std::in_place_t, Args&&... args)
 		: p {new T{std::forward<Args>(args)...}}
 	{
 	}
 
-    lnk(const lnk& o) noexcept
+    link(const link& o) noexcept
     {
         n.insert(o.n);
         p = o.p;
     }
 
-    lnk& operator=(const lnk& o) noexcept
+    link& operator=(const link& o) noexcept
     {
-        ~lnk();
+        ~link();
         n.insert(o.n);
         p = o.p;
         return *this;
@@ -73,7 +73,7 @@ public:
     T* operator->() const noexcept { return p; }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }
 
-    ~lnk()
+    ~link()
     {
         if (n.erase()) {
             delete p;
@@ -82,7 +82,7 @@ public:
 };
 
 template <typename T, typename... U>
-lnk<T> wrap_lnk(U&&... t)
+link<T> wrap_link(U&&... t)
 {
     return {std::in_place, std::forward<U>(t)...};
 }

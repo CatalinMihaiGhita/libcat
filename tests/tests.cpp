@@ -31,18 +31,20 @@ TEST(Cat, Nvr)
     EXPECT_THROW(test(), std::bad_exception);
 }
 
-void test_box(box<mock> b)
+void test_box(safe<mock> b)
 {
     EXPECT_EQ(b->i, 0);
     EXPECT_EQ((*b).i, 0);
 }
 
-TEST(Cat, Box)
+TEST(Cat, Safe)
 {
-    box<mock> s{wrap_box<mock>(0)};
-    EXPECT_EQ(s->i, 0);
-    EXPECT_EQ((*s).i, 0);
-    test_box(std::move(s));
+    {
+        safe<mock> s{wrap_safe<mock>(0)};
+        EXPECT_EQ(s->i, 0);
+        EXPECT_EQ((*s).i, 0);
+        test_box(std::move(s));
+    }
 }
 
 TEST(Cat, Rc)
@@ -57,17 +59,17 @@ TEST(Cat, Rc)
 
 TEST(Cat, Lnk)
 {
-    lnk<mock> s{wrap_lnk<mock>(0)};
+    link<mock> s{wrap_link<mock>(0)};
     EXPECT_EQ(s->i, 0);
     EXPECT_EQ((*s).i, 0);
-    lnk<mock> o{s};
+    link<mock> o{s};
     EXPECT_EQ(o->i, 0);
     EXPECT_EQ((*o).i, 0);
 }
 
 TEST(Cat, Opt)
 {
-    opt<mock> s{wrap_opt<mock>(0)};
+    auto s = wrap_opt<mock>(0);
     auto new_opt = s >>= [] (const mock& s) {
         EXPECT_EQ(s.i, 0);
         return 0;
@@ -78,20 +80,24 @@ TEST(Cat, Opt)
     new_opt >>= [] (int i) {
         EXPECT_EQ(i, 1);
     };
+    s << nil{};
 }
 
-TEST(Cat, OptBox)
+TEST(Cat, Box)
 {
-    opt<box<mock>> s{wrap_box<mock>(0)};
-    s >>= [] (const box<mock>& s) {
+    box<mock> s{wrap_safe<mock>(0)};
+    s >>= [] (const safe<mock>& s) {
         EXPECT_EQ(s->i, 0);
     };
+    for (auto && i : s) {
+        EXPECT_EQ(i->i, 0);
+    }
 }
 
 TEST(Cat, Wk)
 {
     auto owner = wrap_rc<mock>(0);
-    wk<mock> s{++owner};
+    wk<mock> s{owner};
     s >>= [] (const rc<mock>& s) {
         EXPECT_EQ(s->i++, 0);
     };
@@ -101,19 +107,19 @@ TEST(Cat, Wk)
     EXPECT_EQ(owner->i, 2);
 }
 
-lzy<float> generate()
+lazy<float> generate()
 {
     return {std::in_place, 10.0f};
 }
 
-TEST(Cat, Lzy)
+TEST(Cat, Lazy)
 {
-    auto l = wrap_lzy<int>(100);
+    auto l = wrap_lazy<int>(100);
     l >>= [] (int t) {
            EXPECT_EQ(t, 100);
     };
 
-    lzy<int> l2;
+    lazy<int> l2;
     auto f = l2 >>= [] (int t){
         static int tries = 1;
         switch (tries) {
@@ -144,7 +150,7 @@ TEST(Cat, Lzy)
     l2 << 55;
     l2 << 66;
 
-    auto l3 = wrap_lzy<int>(77);
+    auto l3 = wrap_lazy<int>(77);
     l2 << l3;
     l2 << l3;
 

@@ -5,37 +5,67 @@
 
 #pragma once
 
-#include <memory>
-#include <all.h>
+#include <opt.h>
+#include <safe.h>
+#include <mnd.h>
 
 namespace cat {
 
 template <typename T>
-class box
+using box = opt<safe<T>>;
+
+template <typename T>
+class any<safe<T>, nil>
 {
-    template <typename... U>
-    friend class any;
-
-    constexpr box(nil) {}
 public:
-    template <typename U>
-    box(box<U>&& u) : p(std::move(u.p)) {}
-    template <typename... U>
-    box(std::in_place_t, U&&... t) : p(new T{std::forward<U>(t)...}) {}
+    class iter
+    {
+    public:
+        const safe<T>& operator*() const { return *p; }
+        bool operator!=(nil) const { return p != nullptr; }
+        bool operator==(nil) const { return p == nullptr; }
+        void operator++() { p = nullptr; }
 
-    T* operator->() const noexcept { return p.get(); }
-    std::add_lvalue_reference_t<T> operator*() const { return *p; }
+    private:
+        iter(const safe<T>* p) : p(p) {}
+        const safe<T>* p;
+        friend class any;
+    };
+
+    constexpr any() : p(nil{}) {}
+    constexpr any(nil n) : p(n) {}
+    any& operator << (nil n) { p = safe<T>{n}; }
+
+    any(const any &t) = delete;
+    any& operator=(const any &t) = delete;
+
+    template <typename U>
+    any(safe<U>&& u) : p(std::move(u)) {}
+    template <typename U>
+    any& operator << (safe<U>&& u) { p = std::move(u); }
+
+    constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
+
+    template <typename F>
+    join_t<opt, F, const safe<T>&> operator >>= (F f) const
+    {
+        if constexpr (std::is_void_v<join_t<opt, F, const safe<T>&>>) {
+            if (p.operator->()) {
+                f(p);
+            }
+        } else {
+            if (p.operator->())
+                return f(p);
+            else
+                return {};
+        }
+    }
+
+    iter begin() const { return iter{p.operator->() ? &p : nullptr}; }
+    nil end() const { return {}; }
 
 private:
-    template <class U>
-    friend class box;
-    std::unique_ptr<T> p;
+    safe<T> p;
 };
-
-template <typename T, typename... U>
-box<T> wrap_box(U&&... t)
-{
-    return {std::in_place, std::forward<U>(t)...};
-}
 
 }

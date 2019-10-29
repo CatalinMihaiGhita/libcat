@@ -31,7 +31,7 @@ nvr = any<>
 
 A unique_ptr<A> equivalent, but never nullptr
 ```C++
-box<A>
+safe<A>
 ```
   
 A shared_ptr<A> equivalent, but never nullptr
@@ -41,7 +41,7 @@ rc<A>
 
 Memory management of A with a linked list
 ```C++
-lnk<A>
+link<A>
 ```
 
 ### Monad Types
@@ -53,7 +53,7 @@ opt<A> = any<A, nil>
 
 The lazy type: A | nvr
 ```C++
-lzy<A> = any<A, nvr>
+lazy<A> = any<A, nvr>
 ```
 
 The vector type (A, ...) | nil
@@ -63,9 +63,9 @@ vec<A>
 
 ### Monad Types + Memory Management Types
 
-The unique_ptr equivalent: box<A> | nil
+The unique_ptr equivalent: safe<A> | nil
 ```C++
-opt<box<A>>
+box<A>
 ```
 
 The weak_ptr equivalent: rc<A> | nil

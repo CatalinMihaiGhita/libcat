@@ -35,19 +35,17 @@ public:
         friend class any;
     };
 
+    any(const any &t) = delete;
+    any& operator=(const any &t) = delete;
+
     constexpr any() {}
     constexpr any(nil) {}
     any& operator << (nil) { p.reset(); }
 
     template <typename U>
-    any(const rc<U>&) = delete;
+    any(const rc<U>& u) : p(u.p) {}
     template <typename U>
-    any& operator = (const rc<U>&) = delete;
-
-    template <typename U>
-    any(rc<U>&& u) : p(std::move(u.p)) {}
-    template <typename U>
-    any& operator << (rc<U>&& u) { p = std::move(u.p); }
+    any& operator << (const rc<U>& u) { p = u.p; }
 
     constexpr std::size_t index() const { return !p.expired(); }
 

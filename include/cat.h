@@ -7,10 +7,11 @@
 #include <fn.h>
 #include <all.h>
 #include <any.h>
-#include <box.h>
+#include <safe.h>
 #include <rc.h>
-#include <lnk.h>
+#include <link.h>
 #include <opt.h>
-#include <lzy.h>
+#include <box.h>
+#include <lazy.h>
 #include <vec.h>
 #include <wk.h>
