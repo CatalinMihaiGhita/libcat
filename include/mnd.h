@@ -9,33 +9,22 @@
 
 namespace cat {
 
-template <template<class> class M, class T>
-struct flatten
+template <class T>
+struct mnd : public std::false_type
 {
-     typedef T type;
+    using flat_type = T;
 };
 
-template <template<class> class M, class T>
-struct flatten<M, M<T>>
-{
-    typedef T type;
-};
+template <class T>
+inline constexpr bool is_mnd_v = mnd<T>::value;
 
-template <template<class> class M, class T>
-using flatten_t = typename flatten<M, T>::type;
+template <typename R>
+using flatten_t = typename mnd <R>::flat_type;
 
 template <template<class> class M, typename R>
-using flatten_or_void_t = std::conditional_t<std::is_void_v<R>, void, M<flatten_t<M, R>>>;
+using mnd_or_void_t = std::conditional_t<std::is_void_v<R>, void, M<flatten_t<R>>>;
 
 template <template<class> class M, typename F, typename T>
-using join_t = flatten_or_void_t<M, std::invoke_result_t<F,T>>;
-
-template <class T>
-class is_monad : public std::false_type
-{
-};
-
-template <class T>
-inline constexpr bool is_monad_v = is_monad<T>::value;
+using join_t = mnd_or_void_t<M, std::invoke_result_t<F, T>>;
 
 }

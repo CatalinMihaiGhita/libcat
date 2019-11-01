@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include <opt.h>
 #include <safe.h>
-#include <mnd.h>
 
 namespace cat {
 
@@ -33,7 +31,7 @@ public:
     };
 
     template <typename U>
-    opt(std::in_place_t, safe<U>&& u) : p(std::move(u)) {}
+    explicit opt(std::in_place_t, safe<U>&& u) : p(std::move(u)) {}
 
     constexpr opt() : p(nil{}) {}
     constexpr opt(nil n) : p(n) {}

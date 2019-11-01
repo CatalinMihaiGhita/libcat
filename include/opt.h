@@ -18,6 +18,8 @@ template <typename T>
 class opt
 {
 public:
+    using flat_type = T;
+
     class iter
     {
     public:
@@ -34,8 +36,11 @@ public:
     constexpr opt() {}
     constexpr opt(nil) {}
 
+    template <typename U = T>
+    constexpr opt(U&& u) : p{std::forward<U>(u)} {}
+
     template <typename... U>
-    opt(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
+    explicit opt(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
 
     template <typename U = T>
     opt& operator << (U&& u) { p = std::forward<U>(u); return *this; }
@@ -48,7 +53,7 @@ public:
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    decltype (auto) operator >>= (F f) const
+    decltype (auto) operator >>= (F f) const &
     {
         using opt_t = join_t<opt, F, const T&>;
         if constexpr (std::is_void_v<opt_t>) {
@@ -56,6 +61,19 @@ public:
         } else {
             opt_t r;
             if (p) r << f(*p);
+            return r;
+        }
+    }
+
+    template <typename F>
+    decltype (auto) operator >>= (F f) &&
+    {
+        using opt_t = join_t<opt, F, T&&>;
+        if constexpr (std::is_void_v<opt_t>) {
+            if (p) f(std::move(*p));
+        } else {
+            opt_t r;
+            if (p) r << f(std::move(*p));
             return r;
         }
     }
@@ -70,12 +88,19 @@ private:
 template <typename T, typename... U>
 opt<T> wrap_opt(U&&... t)
 {
-    return {std::in_place, std::forward<U>(t)...};
+    return opt<T>{std::in_place, std::forward<U>(t)...};
 }
 
 template <typename T>
-class is_monad<opt<T>> : public std::true_type
+struct mnd<opt<T>> : public std::true_type
 {
+    typedef T flat_type;
 };
 
+template<class T>
+opt(T) -> opt<T>;
+
 }
+
+#include <box.h>
+#include <wk.h>

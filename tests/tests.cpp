@@ -212,14 +212,14 @@ TEST(Cat, Wk)
 
 TEST(Cat, Lazy)
 {
-    static_assert (std::is_default_constructible_v<lazy<mockfoo>>);
-    static_assert (!std::is_copy_constructible_v<lazy<mockfoo>>);
-    static_assert (!std::is_copy_assignable_v<lazy<mockfoo>>);
-    static_assert (std::is_move_constructible_v<lazy<mockfoo>>);
-    static_assert (std::is_move_assignable_v<lazy<mockfoo>>);
+    static_assert ( std::is_default_constructible_v<lazy<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v   <lazy<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v      <lazy<mockfoo>>);
+    static_assert ( std::is_move_constructible_v   <lazy<mockfoo>>);
+    static_assert ( std::is_move_assignable_v      <lazy<mockfoo>>);
 
     auto l = wrap_lazy<int>(100);
-    l >>= [] (int t) {
+    l >>= [] (int t) -> void {
            EXPECT_EQ(t, 100);
     };
 
@@ -281,10 +281,16 @@ TEST(Cat, Lazy)
 TEST(Cat, Vec)
 {
     vec<int> v{1, 2, 3, 4, 5};
-    auto new_v = v >>= [] (int i) {
-        return i * 2;
+    auto new_v = v >>= [] (int i) -> opt<int> {
+        if ( i % 2 == 0) {
+            return i;
+        }
+        return {};
     };
+
+    ASSERT_EQ(new_v.size(), 2);
     for (auto&& i : new_v) {
         EXPECT_EQ(i % 2, 0);
     }
+
 }

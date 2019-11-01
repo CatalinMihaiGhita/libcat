@@ -20,7 +20,7 @@ class safe
 public:
 
     template <typename... U>
-    safe(std::in_place_t, U&&... t) : p(new T{std::forward<U>(t)...}) {}
+    explicit safe(std::in_place_t, U&&... t) : p(new T{std::forward<U>(t)...}) {}
 
     template <typename U = T>
     safe(safe<U>&& u) : p(std::move(u.p)) {}
@@ -39,7 +39,7 @@ private:
 template <typename T, typename... U>
 safe<T> wrap_safe(U&&... t)
 {
-    return {std::in_place, std::forward<U>(t)...};
+    return safe<T>{std::in_place, std::forward<U>(t)...};
 }
 
 }

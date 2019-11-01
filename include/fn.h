@@ -68,9 +68,9 @@ struct bind
 };
 
 template <class F, class G,
-          class R = typename std::enable_if_t<!is_monad_v<F>,
+          class R = typename std::enable_if_t<!is_mnd_v<F>,
                                               fn<F>>::result_type>
-using map_t = typename std::conditional_t<is_monad_v<R>,
+using map_t = typename std::conditional_t<is_mnd_v<R>,
                                           bind<F, G>,
                                           fmap<F, G, R>>;
 

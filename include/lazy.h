@@ -80,7 +80,7 @@ class cell<void> : public abstract_cell
 };
 
 template <class F, class T>
-class susp_cell : public cell<flatten_t<lazy, std::invoke_result_t<F,T>>>
+class susp_cell : public cell<flatten_t<std::invoke_result_t<F,T>>>
 {
 public:
     susp_cell(F &&f)
@@ -90,7 +90,7 @@ public:
 
     void take(void* t) override
     {
-        if constexpr (std::is_void_v<flatten_t<lazy, std::invoke_result_t<F,T>>>) {
+        if constexpr (std::is_void_v<flatten_t<std::invoke_result_t<F,T>>>) {
             f(*static_cast<T*>(t));
         } else {
             this->push(f(*static_cast<T*>(t)));
@@ -109,6 +109,8 @@ class lazy
     lazy(std::shared_ptr<impl::cell<T>> p) : p(std::move(p)) {}
 
 public:
+    using flat_type = T;
+
     lazy() : p(std::make_shared<impl::cell<T>>()) {}
 
     lazy(T&& t)
@@ -159,6 +161,22 @@ public:
         return *this;
     }
 
+    lazy& operator << (const opt<T>& ov)
+    {
+        ov >>= [&] (const T& v) {
+            p->push(v);
+        };
+        return *this;
+    }
+
+    lazy& operator << (opt<T>&& ov)
+    {
+        std::move(ov) >>= [&] (T&& v) {
+            p->push(std::move(v));
+        };
+        return *this;
+    }
+
     template <class F>
     decltype (auto) operator >>= (F&& f) const
     {
@@ -187,15 +205,10 @@ lazy<T> wrap_lazy(U&&... t)
     return {std::forward<U>(t)...};
 }
 
-template <class T>
-struct flatten<lazy, lazy<T>>
-{
-    typedef T type;
-};
-
 template <typename T>
-class is_monad<lazy<T>> : public std::true_type
+struct mnd<lazy<T>> : public std::true_type
 {
+    using flat_type = T;
 };
 
 }

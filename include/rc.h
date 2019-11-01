@@ -21,9 +21,8 @@ class rc
     void reset() { p.reset(); }
 
 public:
-
     template <typename... U>
-    rc(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
+    explicit rc(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
 
     rc(const rc<T> &) = delete;
     rc& operator=(const rc<T> &) = delete;
@@ -48,7 +47,7 @@ private:
 template <typename T, typename... U>
 rc<T> wrap_rc(U&&... t)
 {
-    return {std::in_place, std::forward<U>(t)...};
+    return rc<T>{std::in_place, std::forward<U>(t)...};
 }
 
 }

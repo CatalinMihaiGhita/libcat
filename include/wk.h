@@ -7,11 +7,7 @@
 
 #include <memory>
 
-#include <mnd.h>
-
 #include <rc.h>
-#include <opt.h>
-#include <any.h>
 
 namespace cat {
 
@@ -24,6 +20,8 @@ class opt<rc<T>>
     opt(const std::weak_ptr<T> &t) : p(t) {}
 
 public:
+    using flat_type = rc<T>;
+
     class iter
     {
     public:
@@ -54,7 +52,7 @@ public:
     opt(wk<U>&& u) : p(std::move(u.p)) {}
 
     template <typename U>
-    opt(std::in_place_t, const rc<U>& u) : p(u.p) {}
+    explicit opt(std::in_place_t, const rc<U>& u) : p(u.p) {}
 
     opt& operator << (nil) { p.reset(); return *this; }
     template <typename U>

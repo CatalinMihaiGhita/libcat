@@ -9,6 +9,7 @@
 #include <all.h>
 
 #include <mnd.h>
+#include <opt.h>
 
 #include <vector>
 
@@ -18,6 +19,8 @@ template <typename T>
 class vec
 {
 public:
+    using flat_type = T;
+
     class iter
     {
     public:
@@ -70,6 +73,27 @@ public:
         return *this;
     }
 
+    vec<T>& operator << (nil)
+    {
+        return *this;
+    }
+
+    vec<T>& operator << (const opt<T>& ov)
+    {
+        ov >>= [&] (const T& v) {
+            p.emplace_back(v);
+        };
+        return *this;
+    }
+
+    vec<T>& operator << (opt<T>&& ov)
+    {
+        std::move(ov) >>= [&] (T&& v) {
+            p.emplace_back(std::move(v));
+        };
+        return *this;
+    }
+
     vec<T>& operator << (const vec<T>& v)
     {
         p.insert(p.end(),
@@ -88,13 +112,19 @@ public:
         return p.end();
     }
 
+    size_t size() const noexcept
+    {
+        return p.size();
+    }
+
 private:
     std::vector<T> p;
 };
 
 template <typename T>
-class is_monad<vec<T>> : public std::true_type
+struct mnd<vec<T>> : public std::true_type
 {
+    typedef T flat_type;
 };
 
 }

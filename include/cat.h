@@ -11,7 +11,5 @@
 #include <rc.h>
 #include <link.h>
 #include <opt.h>
-#include <box.h>
 #include <lazy.h>
 #include <vec.h>
-#include <wk.h>
