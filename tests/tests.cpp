@@ -4,18 +4,62 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <cat.h>
 
 using namespace cat;
 
-struct mock {
-    mock(int i) : i{i} {}
-    int i;
+struct foo
+{
+    virtual ~foo();
 };
+
+foo::~foo()
+{}
+
+struct mockfoo : public foo
+{
+    mockfoo(int i);
+    ~mockfoo() override;
+    mockfoo(const mockfoo&);
+    mockfoo& operator=(const mockfoo&);
+
+    MOCK_METHOD0(Die, void());
+    int val;
+    int val2;
+};
+
+mockfoo::mockfoo(int i)
+    : val(i)
+{
+    EXPECT_CALL(*this, Die());
+}
+
+mockfoo::~mockfoo()
+{
+    Die();
+}
+
+mockfoo::mockfoo(const mockfoo& o)
+    : val(o.val)
+{}
+
+mockfoo& mockfoo::operator=(const mockfoo& o)
+{
+    val = o.val;
+    return *this;
+}
 
 TEST(Cat, Nil)
 {
+    static_assert (std::is_empty_v<nil>);
+    static_assert (std::is_default_constructible_v<nil>);
+    static_assert (std::is_copy_constructible_v<nil>);
+    static_assert (std::is_copy_assignable_v<nil>);
+    static_assert (std::is_move_constructible_v<nil>);
+    static_assert (std::is_move_assignable_v<nil>);
+
     nil n1;
     nil n2 = {};
     n2 = n1;
@@ -24,54 +68,87 @@ TEST(Cat, Nil)
     EXPECT_FALSE(n1 != n2);
 }
 
-nvr test() { throw std::bad_exception{}; }
+nvr throw_exception() { throw std::bad_exception{}; }
 
 TEST(Cat, Nvr)
 {
-    EXPECT_THROW(test(), std::bad_exception);
+    static_assert (std::is_empty_v<nvr>);
+    static_assert (!std::is_default_constructible_v<nvr>);
+    static_assert (std::is_copy_constructible_v<nvr>);
+    static_assert (std::is_copy_assignable_v<nvr>);
+    static_assert (std::is_move_constructible_v<nvr>);
+    static_assert (std::is_move_assignable_v<nvr>);
+
+    EXPECT_THROW(throw_exception(), std::bad_exception);
 }
 
-void test_box(safe<mock> b)
+void test_box(safe<mockfoo> b, int t)
 {
-    EXPECT_EQ(b->i, 0);
-    EXPECT_EQ((*b).i, 0);
+    EXPECT_EQ(b->val, t);
+    EXPECT_EQ((*b).val, t);
 }
 
 TEST(Cat, Safe)
 {
+    static_assert (!std::is_default_constructible_v<safe<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v<safe<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v<safe<mockfoo>>);
+    static_assert (std::is_move_constructible_v<safe<mockfoo>>);
+    static_assert (std::is_move_assignable_v<safe<mockfoo>>);
+
     {
-        safe<mock> s{wrap_safe<mock>(0)};
-        EXPECT_EQ(s->i, 0);
-        EXPECT_EQ((*s).i, 0);
-        test_box(std::move(s));
+        safe<mockfoo> s{wrap_safe<mockfoo>(0)};
+        EXPECT_EQ(s->val, 0);
+        EXPECT_EQ((*s).val, 0);
+        test_box(std::move(s), 0);
+    }
+    {
+        safe<mockfoo> s{std::in_place, 0};
+        s = wrap_safe<mockfoo>(1);
+        EXPECT_EQ(s->val, 1);
+        EXPECT_EQ((*s).val, 1);
+        test_box(std::move(s), 1);
     }
 }
 
 TEST(Cat, Rc)
 {
-    rc<mock> s{wrap_rc<mock>(0)};
-    EXPECT_EQ(s->i, 0);
-    EXPECT_EQ((*s).i, 0);
-    rc<mock> o{++s};
-    EXPECT_EQ(o->i, 0);
-    EXPECT_EQ((*o).i, 0);
+    static_assert (!std::is_default_constructible_v<rc<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v<rc<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v<rc<mockfoo>>);
+    static_assert (std::is_move_constructible_v<rc<mockfoo>>);
+    static_assert (std::is_move_assignable_v<rc<mockfoo>>);
+
+    rc<mockfoo> s{wrap_rc<mockfoo>(0)};
+
+    EXPECT_EQ(s->val, 0);
+    EXPECT_EQ((*s).val, 0);
+    rc<mockfoo> o{++s};
+    EXPECT_EQ(o->val, 0);
+    EXPECT_EQ((*o).val, 0);
 }
 
 TEST(Cat, Lnk)
 {
-    link<mock> s{wrap_link<mock>(0)};
-    EXPECT_EQ(s->i, 0);
-    EXPECT_EQ((*s).i, 0);
-    link<mock> o{s};
-    EXPECT_EQ(o->i, 0);
-    EXPECT_EQ((*o).i, 0);
+    link<mockfoo> s{wrap_link<mockfoo>(0)};
+    EXPECT_EQ(s->val, 0);
+    EXPECT_EQ((*s).val, 0);
+    link<mockfoo> o{s};
+    EXPECT_EQ(o->val, 0);
+    EXPECT_EQ((*o).val, 0);
 }
 
 TEST(Cat, Opt)
 {
-    auto s = wrap_opt<mock>(0);
-    auto new_opt = s >>= [] (const mock& s) {
-        EXPECT_EQ(s.i, 0);
+    static_assert (std::is_default_constructible_v<opt<mockfoo>>);
+    static_assert (std::is_copy_constructible_v<opt<mockfoo>>);
+    static_assert (std::is_copy_assignable_v<opt<mockfoo>>);
+    static_assert (std::is_move_constructible_v<opt<mockfoo>>);
+    static_assert (std::is_move_assignable_v<opt<mockfoo>>);
+
+    auto s = wrap_opt<mockfoo>(0);
+    auto new_opt = s >>= [] (const mockfoo& s) {
+        EXPECT_EQ(s.val, 0);
         return 0;
     } >>= [] (int i) {
        EXPECT_EQ(i, 0);
@@ -85,35 +162,68 @@ TEST(Cat, Opt)
 
 TEST(Cat, Box)
 {
-    box<mock> s{wrap_safe<mock>(0)};
-    s >>= [] (const safe<mock>& s) {
-        EXPECT_EQ(s->i, 0);
+    static_assert (std::is_default_constructible_v<box<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v<box<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v<box<mockfoo>>);
+    static_assert (std::is_move_constructible_v<box<mockfoo>>);
+    static_assert (std::is_move_assignable_v<box<mockfoo>>);
+
+    box<mockfoo> b{wrap_safe<mockfoo>(0)};
+    b >>= [] (const safe<mockfoo>& s) {
+        EXPECT_EQ(s->val, 0);
+        return 0;
     };
-    for (auto && i : s) {
-        EXPECT_EQ(i->i, 0);
+    for (const safe<mockfoo>& s : b) {
+        EXPECT_EQ(s->val, 0);
     }
+    b << nil{};
+
 }
 
 TEST(Cat, Wk)
 {
-    auto owner = wrap_rc<mock>(0);
-    wk<mock> s{owner};
-    s >>= [] (const rc<mock>& s) {
-        EXPECT_EQ(s->i++, 0);
+    static_assert (std::is_default_constructible_v<wk<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v<wk<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v<wk<mockfoo>>);
+    static_assert (std::is_move_constructible_v<wk<mockfoo>>);
+    static_assert (std::is_move_assignable_v<wk<mockfoo>>);
+
+    auto owner = wrap_rc<mockfoo>(0);
+    wk<mockfoo> s{owner};
+    auto new_opt = s >>= [] (const rc<mockfoo>& s) {
+        EXPECT_EQ(s->val++, 0);
+        return 2;
     };
-    for (auto&& i : s) {
-        EXPECT_EQ(i->i++, 1);
+    for (const rc<mockfoo>& i : s) {
+        EXPECT_EQ(i->val++, 1);
     }
-    EXPECT_EQ(owner->i, 2);
+    for (int i : new_opt) {
+        EXPECT_EQ(i, 2);
+    }
+
+    wk<mockfoo> ss{++s};
+    for (const rc<mockfoo>& i : ss) {
+        EXPECT_EQ(i->val, 2);
+    }
+
+    EXPECT_EQ(owner->val, 2);
+    ss << nil{};
 }
 
 lazy<float> generate()
 {
-    return {std::in_place, 10.0f};
+    return {10.0f};
 }
 
 TEST(Cat, Lazy)
 {
+    static_assert (std::is_default_constructible_v<lazy<mockfoo>>);
+    static_assert (!std::is_copy_constructible_v<lazy<mockfoo>>);
+    static_assert (!std::is_copy_assignable_v<lazy<mockfoo>>);
+    static_assert (std::is_move_constructible_v<lazy<mockfoo>>);
+    static_assert (std::is_move_assignable_v<lazy<mockfoo>>);
+
+
     auto l = wrap_lazy<int>(100);
     l >>= [] (int t) {
            EXPECT_EQ(t, 100);
@@ -155,6 +265,8 @@ TEST(Cat, Lazy)
     l2 << l3;
 
     auto l4{++l3};
+
+    EXPECT_THROW(l4 << throw_exception(), std::bad_exception);
 
     EXPECT_EQ(executed, 3);
 }

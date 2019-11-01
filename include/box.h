@@ -15,7 +15,7 @@ template <typename T>
 using box = opt<safe<T>>;
 
 template <typename T>
-class any<safe<T>, nil>
+class opt<safe<T>>
 {
 public:
     class iter
@@ -29,35 +29,41 @@ public:
     private:
         iter(const safe<T>* p) : p(p) {}
         const safe<T>* p;
-        friend class any;
+        friend class opt;
     };
 
-    constexpr any() : p(nil{}) {}
-    constexpr any(nil n) : p(n) {}
-    any& operator << (nil n) { p = safe<T>{n}; }
+    constexpr opt() : p(nil{}) {}
+    constexpr opt(nil n) : p(n) {}
+    opt& operator << (nil n) { p = safe<T>{n}; return *this; }
 
-    any(const any &t) = delete;
-    any& operator=(const any &t) = delete;
+    opt(opt &&t) = default;
+    opt& operator=(opt &&t) = default;
+
+    opt(const opt &t) = delete;
+    opt& operator=(const opt &t) = delete;
 
     template <typename U>
-    any(safe<U>&& u) : p(std::move(u)) {}
+    opt(safe<U>&& u) : p(std::move(u)) {}
     template <typename U>
-    any& operator << (safe<U>&& u) { p = std::move(u); }
+    opt(std::in_place_t, safe<U>&& u) : p(std::move(u)) {}
+    template <typename U>
+    opt& operator << (safe<U>&& u) { p = std::move(u); }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    join_t<opt, F, const safe<T>&> operator >>= (F f) const
+    decltype (auto) operator >>= (F f) const
     {
+        using opt_t = join_t<opt, F, const safe<T>&>;
         if constexpr (std::is_void_v<join_t<opt, F, const safe<T>&>>) {
             if (p.operator->()) {
                 f(p);
             }
         } else {
             if (p.operator->())
-                return f(p);
+                return opt_t{std::in_place, f(p)};
             else
-                return {};
+                return opt_t{};
         }
     }
 

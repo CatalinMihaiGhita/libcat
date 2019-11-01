@@ -9,39 +9,8 @@
 
 namespace cat {
 
-template<class... Ts> struct match : Ts... { using Ts::operator()...; };
-template<class... Ts> match(Ts...) -> match<Ts...>;
-
 template <typename... T>
-class all
-{
-public:
-    constexpr all() {}
-    template <typename... U>
-    constexpr all(U&&... u) : t(std::forward<U>(u)...) {}
-private:
-    std::tuple<T...> t;
-};
-
-template<class... T>
-all(T...) -> all<T...>;
-
-template <>
-class all<>
-{
-public:
-    constexpr all() {}
-    template <typename T> 
-    constexpr all(T&&) {}
-};
-
-constexpr bool operator<(const all<>&, const all<>&) noexcept { return false; }
-constexpr bool operator>(const all<>&, const all<>&) noexcept { return false; }
-constexpr bool operator<=(const all<>&, const all<>&) noexcept { return true; }
-constexpr bool operator>=(const all<>&, const all<>&) noexcept { return true; }
-constexpr bool operator==(const all<>&, const all<>&) noexcept { return true; }
-constexpr bool operator!=(const all<>&, const all<>&) noexcept { return false; }
-
+using all = std::tuple<T...>;
 using nil = all<>;
 
 }

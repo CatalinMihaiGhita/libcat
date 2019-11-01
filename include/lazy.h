@@ -14,25 +14,14 @@
 namespace cat {
 
 template <class T>
-using lazy = any<T, nvr>;
-
-template <class T>
-struct flatten<lazy, lazy<T>>
-{
-    typedef T type;
-};
-
-template <typename T>
-class is_monad<lazy<T>> : public std::true_type
-{
-};
+class lazy;
 
 namespace impl {
 
 class abstract_cell
 {
 public:
-    virtual void take(void* t) = 0;
+    virtual void take(void*) {}
     virtual ~abstract_cell() {}
 };
 
@@ -109,39 +98,49 @@ private:
 }
 
 template <class T>
-class any<T, nvr>
+class lazy
 {
-    any(std::shared_ptr<impl::cell<T>> p) : p(std::move(p)) {}
+    lazy(std::shared_ptr<impl::cell<T>> p) : p(std::move(p)) {}
 
 public:
-    any() : p(std::make_shared<impl::cell<T>>()) {}
-    any(std::in_place_t, T&& t)
+    lazy() : p(std::make_shared<impl::cell<T>>()) {}
+
+    lazy(T&& t)
         : p(std::make_shared<impl::cell<T>>())
     {
         p->val = std::move(t);
     }
 
-    any(std::in_place_t, const T& t)
+    lazy(const T& t)
         : p(std::make_shared<impl::cell<T>>())
     {
         p->val = t;
     }
 
-    any(const any &t) = delete;
-    any& operator=(const any &t) = delete;
+    lazy(const lazy &t) = delete;
+    lazy& operator=(const lazy &t) = delete;
 
-    any& operator << (T t) {
+    lazy(lazy &&t) = default;
+    lazy& operator=(lazy &&t) = default;
+
+    lazy& operator << (T t)
+    {
         p->push(std::move(t));
         return *this;
     }
 
-    any& operator << (const lazy<T>& other)
+    lazy& operator << (nvr)
+    {
+        return *this;
+    }
+
+    lazy& operator << (const lazy<T>& other)
     {
         p->push(other);
         return *this;
     }
 
-    any& operator << (lazy<T>&& other)
+    lazy& operator << (lazy<T>&& other)
     {
         p->push(std::move(other));
         return *this;
@@ -160,19 +159,30 @@ public:
         }
     }
 
-    any operator++() const { return p; }
+    lazy operator++() const { return p; }
 
 private:
     friend class impl::cell<T>;
-    template <class... U>
-    friend class any;
+    template <typename U>
+    friend class lazy;
     std::shared_ptr<impl::cell<T>> p;
 };
 
 template <typename T, typename... U>
 lazy<T> wrap_lazy(U&&... t)
 {
-    return {std::in_place, std::forward<U>(t)...};
+    return {std::forward<U>(t)...};
 }
+
+template <class T>
+struct flatten<lazy, lazy<T>>
+{
+    typedef T type;
+};
+
+template <typename T>
+class is_monad<lazy<T>> : public std::true_type
+{
+};
 
 }

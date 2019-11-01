@@ -15,15 +15,7 @@
 namespace cat {
 
 template <typename T>
-using opt = any<T, nil>;
-
-template <typename T>
-class is_monad<opt<T>> : public std::true_type
-{
-};
-
-template <typename T>
-class any<T, nil>
+class opt
 {
 public:
     class iter
@@ -36,17 +28,17 @@ public:
     private:
         iter(const std::optional<T>* p) : p(p) {}
         const std::optional<T>* p;
-        friend class any;
+        friend class opt;
     };
 
-    constexpr any() {}
-    constexpr any(nil) {}
-    any& operator << (nil) { p.reset(); return *this; }
+    constexpr opt() {}
+    constexpr opt(nil) {}
+    opt& operator << (nil) { p.reset(); return *this; }
 
     template <typename... U>
-    any(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
+    opt(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
     template <typename U>
-    any& operator << (U&& u) { p = std::forward(u); return *this; }
+    opt& operator << (U&& u) { p = std::forward(u); return *this; }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -55,9 +47,7 @@ public:
     {
         using opt_t = join_t<opt, F, const T&>;
         if constexpr (std::is_void_v<opt_t>) {
-            if (p) {
-                f(*p);
-            }
+            if (p) f(*p);
         } else {
             if (p)
                 return opt_t{std::in_place, f(*p)};
@@ -78,5 +68,10 @@ opt<T> wrap_opt(U&&... t)
 {
     return {std::in_place, std::forward<U>(t)...};
 }
+
+template <typename T>
+class is_monad<opt<T>> : public std::true_type
+{
+};
 
 }

@@ -13,25 +13,25 @@ namespace cat {
 template <typename T>
 class rc
 {
-    template <typename... U>
-    friend class any;
+    template <typename U>
+    friend class opt;
 
-    rc(const std::shared_ptr<T> &t) : p(t) {}
+    rc(std::shared_ptr<T> t) : p(std::move(t)) {}
     constexpr rc(nil) {}
+    void reset() { p.reset(); }
+
 public:
 
-    template <typename U = T>
-    rc(const rc<U> &) = delete;
-    template <typename U = T>
-    rc& operator=(rc<U> &) = delete;
+    template <typename... U>
+    rc(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
+
+    rc(const rc<T> &) = delete;
+    rc& operator=(const rc<T> &) = delete;
 
     template <typename U = T>
     rc(rc<U> &&t) : p(std::move(t.p)) {}
     template <typename U = T>
     rc& operator=(rc<U> &&t) { p = std::move(t.p); }
-
-    template <typename... U>
-    rc(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
 
     T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }

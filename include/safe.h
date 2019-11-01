@@ -13,15 +13,19 @@ namespace cat {
 template <typename T>
 class safe
 {
-    template <typename... U>
-    friend class any;
+    template <typename U>
+    friend class opt;
 
     constexpr safe(nil) {}
 public:
-    template <typename U>
-    safe(safe<U>&& u) : p(std::move(u.p)) {}
+
     template <typename... U>
     safe(std::in_place_t, U&&... t) : p(new T{std::forward<U>(t)...}) {}
+
+    template <typename U = T>
+    safe(safe<U>&& u) : p(std::move(u.p)) {}
+    template <typename U = T>
+    safe& operator=(safe<U> &&t) { p = std::move(t.p); }
 
     T* operator->() const noexcept { return p.get(); }
     std::add_lvalue_reference_t<T> operator*() const { return *p; }

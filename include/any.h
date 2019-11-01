@@ -11,44 +11,23 @@
 namespace cat {
 
 template <typename... T>
-class any
+using any = std::variant<T...>;
+
+class nvr
 {
 public:
-    constexpr any() {}
-    template <typename U>
-    constexpr any(U&& u) : t(std::forward<U>(u)) {}
-    template <std::size_t I, typename... U>
-    constexpr any(std::in_place_index_t<I> i, U&&... u)
-        : t(i, std::forward<U>(u)...) {}
-
-    constexpr std::size_t index() { return t.index(); }
-
-    template <typename F>
-    decltype(auto) operator >> (F f) const  {
-        return std::visit(f, t);
-    }
-private:
-    std::variant<T...> t;
-};
-
-template <>
-class any<>
-{
-public:
-    explicit any() = delete;
-    [[noreturn]] any(const any&) { std::abort(); }
-    [[noreturn]] any& operator=(const any&) { std::abort(); }
+    explicit nvr() = delete;
+    [[noreturn]] nvr(const nvr&) { std::abort(); }
+    [[noreturn]] nvr& operator=(const nvr&) { std::abort(); }
     template <typename T>
     [[noreturn]] operator T() const { std::abort(); }
 };
 
-constexpr bool operator<(const any<>&, const any<>&) noexcept { return false; }
-constexpr bool operator>(const any<>&, const any<>&) noexcept { return false; }
-constexpr bool operator<=(const any<>&, const any<>&) noexcept { return false; }
-constexpr bool operator>=(const any<>&, const any<>&) noexcept { return false; }
-constexpr bool operator==(const any<>&, const any<>&) noexcept { return false; }
-constexpr bool operator!=(const any<>&, const any<>&) noexcept { return false; }
-
-using nvr = any<>;
+constexpr bool operator<(const nvr&, const nvr&) noexcept { return false; }
+constexpr bool operator>(const nvr&, const nvr&) noexcept { return false; }
+constexpr bool operator<=(const nvr&, const nvr&) noexcept { return false; }
+constexpr bool operator>=(const nvr&, const nvr&) noexcept { return false; }
+constexpr bool operator==(const nvr&, const nvr&) noexcept { return false; }
+constexpr bool operator!=(const nvr&, const nvr&) noexcept { return false; }
 
 }

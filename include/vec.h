@@ -38,12 +38,11 @@ public:
     template <typename F>
     decltype(auto) operator >>= (F f) const
     {
-        if constexpr (std::is_void_v<join_t<vec, F, const T&>>) {
-            for (auto&& i : p) {
-                f(i);
-            }
+        using vec_t = join_t<vec, F, const T&>;
+        if constexpr (std::is_void_v<vec_t>) {
+            for (auto&& i : p) f(i);
         } else {
-            join_t<vec, F, const T&> v;
+            vec_t v;
             for (auto&& i : p) {
                 v << f(i);
             }

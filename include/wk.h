@@ -15,59 +15,72 @@
 
 namespace cat {
 
-template <class T>
+template <typename T>
 using wk = opt<rc<T>>;
 
 template <typename T>
-class any<rc<T>, nil>
+class opt<rc<T>>
 {
+    opt(const std::weak_ptr<T> &t) : p(t) {}
+
 public:
     class iter
     {
     public:
         const rc<T>& operator*() const { return p; }
-        bool operator!=(nil) const { return p != nullptr; }
-        bool operator==(nil) const { return p == nullptr; }
+        bool operator!=(nil) const { return p.operator->() != nullptr; }
+        bool operator==(nil) const { return p.operator->() == nullptr; }
         void operator++() { p.reset(); }
     private:
         iter(std::shared_ptr<T>&& p) : p(std::move(p)) {}
-        std::shared_ptr<T> p;
-        friend class any;
+        rc<T> p;
+        friend class opt;
     };
 
-    any(const any &t) = delete;
-    any& operator=(const any &t) = delete;
+    opt(const opt &t) = delete;
+    opt& operator=(const opt &t) = delete;
 
-    constexpr any() {}
-    constexpr any(nil) {}
-    any& operator << (nil) { p.reset(); }
+    constexpr opt() {}
+    constexpr opt(nil) {}
+    opt& operator << (nil) { p.reset(); return *this; }
+
+    opt(opt &&t) = default;
+    opt& operator=(opt &&t) = default;
 
     template <typename U>
-    any(const rc<U>& u) : p(u.p) {}
+    opt(const rc<U>& u) : p(u.p) {}
     template <typename U>
-    any& operator << (const rc<U>& u) { p = u.p; }
+    opt(std::in_place_t, const rc<U>& u) : p(u.p) {}
+    template <typename U>
+    opt& operator << (const rc<U>& u) { p = u.p; }
+
+    template <typename U>
+    opt(rc<U>&&) = delete;
+    template <typename U>
+    opt(std::in_place_t, rc<U>&&) = delete;
+    template <typename U>
+    opt& operator << (rc<U>&& u) = delete;
 
     constexpr std::size_t index() const { return !p.expired(); }
 
     template <typename F>
-    join_t<opt, F, const rc<T>&> operator >>= (F f) const
+    decltype (auto) operator >>= (F f) const
     {
+        using opt_t = join_t<opt, F, const rc<T>&>;
         if constexpr (std::is_void_v<join_t<opt, F, const rc<T>&>>) {
-            if (auto g = p.lock()) {
-                f(g);
-            }
+            if (auto g = p.lock()) f(g);
         } else {
             if (auto g = p.lock())
-                return f(g);
+                return opt_t{std::in_place, f(g)};
             else
-                return {};
+                return opt_t{};
         }
     }
 
     iter begin() const {return iter{p.lock()}; }
     nil end() const { return {}; }
 
-    any operator++() const { return ++p; }
+    opt operator++() const { return p; }
 
 private:
     std::weak_ptr<T> p;
