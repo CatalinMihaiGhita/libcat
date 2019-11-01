@@ -262,14 +262,18 @@ TEST(Cat, Lazy)
     // lazy_identity is in never state now
     generator1 << lazy_identity;
 
-    EXPECT_THROW(generator1 << throw_exception(), std::bad_exception);
-
     EXPECT_EQ(executed, 0);
 
     generator2 << 1;
     generator2 << 2;
     generator2 << 3;
     generator2 << 4;
+
+    EXPECT_EQ(executed, 4);
+
+    generator2.abort();
+
+    generator2 << 1;
 
     EXPECT_EQ(executed, 4);
 }

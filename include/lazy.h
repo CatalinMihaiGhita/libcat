@@ -46,7 +46,7 @@ public:
     void push(lazy<T>&& t) const
     {
         t.p->join(next);
-        t = lazy<T>{};
+        t.abort();
     }
 
     void push(const lazy<T>& t) const
@@ -141,8 +141,9 @@ public:
         return *this;
     }
 
-    lazy& operator << (nvr)
+    lazy& abort()
     {
+        p = std::make_shared<impl::cell<T>>();
         return *this;
     }
 
