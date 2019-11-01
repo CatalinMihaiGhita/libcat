@@ -18,6 +18,8 @@ template <typename T>
 class opt
 {
 public:
+    using flat_type = T;
+
     class iter
     {
     public:
@@ -48,7 +50,7 @@ public:
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
     template <typename F>
-    decltype (auto) operator >>= (F f) const
+    decltype (auto) operator >>= (F f) const &
     {
         using opt_t = join_t<opt, F, const T&>;
         if constexpr (std::is_void_v<opt_t>) {
@@ -56,6 +58,19 @@ public:
         } else {
             opt_t r;
             if (p) r << f(*p);
+            return r;
+        }
+    }
+
+    template <typename F>
+    decltype (auto) operator >>= (F f) &&
+    {
+        using opt_t = join_t<opt, F, T&&>;
+        if constexpr (std::is_void_v<opt_t>) {
+            if (p) f(std::move(*p));
+        } else {
+            opt_t r;
+            if (p) r << f(std::move(*p));
             return r;
         }
     }
@@ -74,8 +89,9 @@ opt<T> wrap_opt(U&&... t)
 }
 
 template <typename T>
-class is_monad<opt<T>> : public std::true_type
+struct is_monad<opt<T>> : public std::true_type
 {
+    typedef T flat_type;
 };
 
 }

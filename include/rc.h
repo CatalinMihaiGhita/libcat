@@ -21,7 +21,6 @@ class rc
     void reset() { p.reset(); }
 
 public:
-
     template <typename... U>
     rc(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
 

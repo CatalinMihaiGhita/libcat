@@ -24,6 +24,8 @@ class opt<rc<T>>
     opt(const std::weak_ptr<T> &t) : p(t) {}
 
 public:
+    using flat_type = rc<T>;
+
     class iter
     {
     public:
