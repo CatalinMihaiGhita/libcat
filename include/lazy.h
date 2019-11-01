@@ -31,15 +31,22 @@ class cell : public abstract_cell
 public:
     void push(T&& t)
     {
+        val = std::move(t);
         if (next)
-            next->take(&t);
-        else
-            val = std::move(t);
+            next->take(val.operator->());
+    }
+
+    void push(const T& t)
+    {
+        val = t;
+        if (next)
+            next->take(val.operator->());
     }
 
     void push(lazy<T>&& t) const
     {
         t.p->join(next);
+        t = lazy<T>{};
     }
 
     void push(const lazy<T>& t) const
@@ -53,14 +60,13 @@ public:
             next = std::move(other);
             if (val) {
                 next->take(val.operator->());
-                val.reset();
             }
         }
     }
 
     void take(void* t) override
     {
-        push(std::move(*static_cast<T*>(t)));
+        push(*static_cast<T*>(t));
     }
 
     std::optional<T> val;
@@ -123,9 +129,15 @@ public:
     lazy(lazy &&t) = default;
     lazy& operator=(lazy &&t) = default;
 
-    lazy& operator << (T t)
+    lazy& operator << (T&& t)
     {
         p->push(std::move(t));
+        return *this;
+    }
+
+    lazy& operator << (const T& t)
+    {
+        p->push(t);
         return *this;
     }
 

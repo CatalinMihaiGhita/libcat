@@ -33,12 +33,17 @@ public:
 
     constexpr opt() {}
     constexpr opt(nil) {}
-    opt& operator << (nil) { p.reset(); return *this; }
 
     template <typename... U>
     opt(std::in_place_t, U&&... u) : p{std::in_place, std::forward<U>(u)...} {}
+
+    template <typename U = T>
+    opt& operator << (U&& u) { p = std::forward<U>(u); return *this; }
     template <typename U>
-    opt& operator << (U&& u) { p = std::forward(u); return *this; }
+    opt& operator << (const opt<U>& u) { p = u.p; return *this; }
+    template <typename U>
+    opt& operator << (opt<U>&& u) { p = std::move(u.p); return *this; }
+    opt& operator << (nil) { p.reset(); return *this; }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -49,10 +54,9 @@ public:
         if constexpr (std::is_void_v<opt_t>) {
             if (p) f(*p);
         } else {
-            if (p)
-                return opt_t{std::in_place, f(*p)};
-            else
-                return opt_t{};
+            opt_t r;
+            if (p) r << f(*p);
+            return r;
         }
     }
 

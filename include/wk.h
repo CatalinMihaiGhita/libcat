@@ -42,7 +42,6 @@ public:
 
     constexpr opt() {}
     constexpr opt(nil) {}
-    opt& operator << (nil) { p.reset(); return *this; }
 
     opt(opt &&t) = default;
     opt& operator=(opt &&t) = default;
@@ -50,9 +49,20 @@ public:
     template <typename U>
     opt(const rc<U>& u) : p(u.p) {}
     template <typename U>
-    opt(std::in_place_t, const rc<U>& u) : p(u.p) {}
+    opt(const wk<U>& u) : p(u.p) {}
     template <typename U>
-    opt& operator << (const rc<U>& u) { p = u.p; }
+    opt(wk<U>&& u) : p(std::move(u.p)) {}
+
+    template <typename U>
+    opt(std::in_place_t, const rc<U>& u) : p(u.p) {}
+
+    opt& operator << (nil) { p.reset(); return *this; }
+    template <typename U>
+    opt& operator << (const rc<U>& u) { p = u.p; return *this;}
+    template <typename U>
+    opt& operator << (const wk<U>& u) { p = u.p; return *this;}
+    template <typename U>
+    opt& operator << (wk<U>&& u) { p = std::move(u.p); return *this;}
 
     template <typename U>
     opt(rc<U>&&) = delete;
@@ -70,10 +80,9 @@ public:
         if constexpr (std::is_void_v<join_t<opt, F, const rc<T>&>>) {
             if (auto g = p.lock()) f(g);
         } else {
-            if (auto g = p.lock())
-                return opt_t{std::in_place, f(g)};
-            else
-                return opt_t{};
+            opt_t r;
+            if (auto g = p.lock()) r << f(g);
+            return r;
         }
     }
 

@@ -32,9 +32,11 @@ public:
         friend class opt;
     };
 
+    template <typename U>
+    opt(std::in_place_t, safe<U>&& u) : p(std::move(u)) {}
+
     constexpr opt() : p(nil{}) {}
     constexpr opt(nil n) : p(n) {}
-    opt& operator << (nil n) { p = safe<T>{n}; return *this; }
 
     opt(opt &&t) = default;
     opt& operator=(opt &&t) = default;
@@ -45,9 +47,13 @@ public:
     template <typename U>
     opt(safe<U>&& u) : p(std::move(u)) {}
     template <typename U>
-    opt(std::in_place_t, safe<U>&& u) : p(std::move(u)) {}
+    opt(box<U>&& u) : p(std::move(u.p)) {}
+
     template <typename U>
-    opt& operator << (safe<U>&& u) { p = std::move(u); }
+    opt& operator << (safe<U>&& u) { p = std::move(u); return *this; }
+    template <typename U>
+    opt& operator << (box<U>&& u) { p = std::move(u.p); return *this; }
+    opt& operator << (nil n) { p = safe<T>{n}; return *this; }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -60,10 +66,9 @@ public:
                 f(p);
             }
         } else {
-            if (p.operator->())
-                return opt_t{std::in_place, f(p)};
-            else
-                return opt_t{};
+            opt_t r;
+            if (p.operator->()) r << f(p);
+            return r;
         }
     }
 

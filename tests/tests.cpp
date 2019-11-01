@@ -192,7 +192,7 @@ TEST(Cat, Wk)
     wk<mockfoo> s{owner};
     auto new_opt = s >>= [] (const rc<mockfoo>& s) {
         EXPECT_EQ(s->val++, 0);
-        return 2;
+        return wrap_opt<int>(2);
     };
     for (const rc<mockfoo>& i : s) {
         EXPECT_EQ(i->val++, 1);
@@ -210,11 +210,6 @@ TEST(Cat, Wk)
     ss << nil{};
 }
 
-lazy<float> generate()
-{
-    return {10.0f};
-}
-
 TEST(Cat, Lazy)
 {
     static_assert (std::is_default_constructible_v<lazy<mockfoo>>);
@@ -223,15 +218,15 @@ TEST(Cat, Lazy)
     static_assert (std::is_move_constructible_v<lazy<mockfoo>>);
     static_assert (std::is_move_assignable_v<lazy<mockfoo>>);
 
-
     auto l = wrap_lazy<int>(100);
     l >>= [] (int t) {
            EXPECT_EQ(t, 100);
     };
 
-    lazy<int> l2;
-    auto f = l2 >>= [] (int t){
-        static int tries = 1;
+    lazy<int> generator2;
+    lazy<int> generator1;
+    auto composed_lazy = generator1 >>= [g = ++generator2] (int t) {
+        static unsigned tries = 1;
         switch (tries) {
         case 1:
             EXPECT_EQ(t, 55);
@@ -240,6 +235,7 @@ TEST(Cat, Lazy)
             EXPECT_EQ(t, 66);
             break;
         case 3:
+        case 4:
             EXPECT_EQ(t, 77);
             break;
         default: {
@@ -248,27 +244,34 @@ TEST(Cat, Lazy)
             }
         }
         ++tries;
-        return generate();
+        return ++g;
     };
 
     int executed = 0;
-    f >>= [&] (float f) {
-         EXPECT_EQ(f, 10.0f);
-         ++executed;
+    composed_lazy >>= [&] (int f) {
+        ++executed;
+         EXPECT_EQ(f, executed);
     };
 
-    l2 << 55;
-    l2 << 66;
+    generator1 << 55;
+    generator1 << 66;
 
-    auto l3 = wrap_lazy<int>(77);
-    l2 << l3;
-    l2 << l3;
+    auto lazy_identity= wrap_lazy<int>(77);
+    generator1 << lazy_identity;
+    generator1 << std::move(lazy_identity);
+    // lazy_identity is in never state now
+    generator1 << lazy_identity;
 
-    auto l4{++l3};
+    EXPECT_THROW(generator1 << throw_exception(), std::bad_exception);
 
-    EXPECT_THROW(l4 << throw_exception(), std::bad_exception);
+    EXPECT_EQ(executed, 0);
 
-    EXPECT_EQ(executed, 3);
+    generator2 << 1;
+    generator2 << 2;
+    generator2 << 3;
+    generator2 << 4;
+
+    EXPECT_EQ(executed, 4);
 }
 
 TEST(Cat, Vec)
