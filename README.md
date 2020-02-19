@@ -51,7 +51,7 @@ link<A>
 
 ### Monad Types
 
-The optional type: A | nil
+The optional type: A | unit
 ```C++
 opt<A> = var<A, unit> 
 ```
@@ -61,19 +61,19 @@ The lazy type: A | nvr
 lazy<A> = var<A, nvr>
 ```
 
-The vector type (A, ...) | nil
+The vector type (A, ...) | unit
 ```C++
 vec<A>
 ```
 
 ### Monad Types + Memory Management Types
 
-The unique_ptr equivalent: box<A> | nil
+The unique_ptr equivalent: box<A> | unit
 ```C++
 opt<box<A>>
 ```
 
-The weak_ptr equivalent: rc<A> | nil
+The weak_ptr equivalent: rc<A> | unit
 ```C++
 opt<rc<A>>
 ```
