@@ -10,28 +10,33 @@ with lesser undefined behaviour.
 #### Product types
 The tuple type: (A, B, ...)
 ```C++
-all<A, B, ...>
+tup<A, B, ...>
 ```
 The unit type ()
 ```C++
-nil = all<>
+unit = tup<>
+```
+
+The unit type singletone
+```C++
+nil
 ```
 
 #### Sum types
 The variant type: A | B | ...
 ```C++
-any<A, B, ...>
+var<A, B, ...>
 ```
 The zero type
 ```C++
-nvr = any<>
+nvr = var<>
 ```
 
 ### Memory Management Types
 
 A unique_ptr<A> equivalent, but never nullptr
 ```C++
-safe<A>
+box<A>
 ```
   
 A shared_ptr<A> equivalent, but never nullptr
@@ -48,12 +53,12 @@ link<A>
 
 The optional type: A | nil
 ```C++
-opt<A> = any<A, nil> 
+opt<A> = var<A, unit> 
 ```
 
 The lazy type: A | nvr
 ```C++
-lazy<A> = any<A, nvr>
+lazy<A> = var<A, nvr>
 ```
 
 The vector type (A, ...) | nil
@@ -63,12 +68,12 @@ vec<A>
 
 ### Monad Types + Memory Management Types
 
-The unique_ptr equivalent: safe<A> | nil
+The unique_ptr equivalent: box<A> | nil
 ```C++
-box<A>
+opt<box<A>>
 ```
 
 The weak_ptr equivalent: rc<A> | nil
 ```C++
-wk<A> = opt<rc<A>>
+opt<rc<A>>
 ```
