@@ -11,7 +11,7 @@
 namespace cat {
 
 template <typename... T>
-using any = std::variant<T...>;
+using var = std::variant<T...>;
 
 class nvr
 {

@@ -7,9 +7,8 @@
 
 #include <optional>
 
-#include <any.h>
-#include <all.h>
-#include <safe.h>
+#include <var.h>
+#include <tup.h>
 #include <mnd.h>
 
 namespace cat {
@@ -24,8 +23,8 @@ public:
     {
     public:
         const T& operator*() const { return **p; }
-        bool operator!=(nil) const { return p != nullptr; }
-        bool operator==(nil) const { return p == nullptr; }
+        bool operator!=(unit) const { return p != nullptr; }
+        bool operator==(unit) const { return p == nullptr; }
         void operator++() { p = nullptr; }
     private:
         iter(const std::optional<T>* p) : p(p) {}
@@ -34,7 +33,7 @@ public:
     };
 
     constexpr opt() {}
-    constexpr opt(nil) {}
+    constexpr opt(unit) {}
 
     template <typename U = T>
     constexpr opt(U&& u) : p{std::forward<U>(u)} {}
@@ -48,7 +47,7 @@ public:
     opt& operator << (const opt<U>& u) { p = u.p; return *this; }
     template <typename U>
     opt& operator << (opt<U>&& u) { p = std::move(u.p); return *this; }
-    opt& operator << (nil) { p.reset(); return *this; }
+    opt& operator << (unit) { p.reset(); return *this; }
 
     constexpr std::size_t index() const { return p.operator->() ? 0 : 1; }
 
@@ -79,7 +78,7 @@ public:
     }
 
     iter begin() const { return iter{p ? &p : nullptr}; }
-    nil end() const { return {}; }
+    unit end() const { return nil; }
 
 private:
     std::optional<T> p;
@@ -101,6 +100,3 @@ template<class T>
 opt(T) -> opt<T>;
 
 }
-
-#include <box.h>
-#include <wk.h>

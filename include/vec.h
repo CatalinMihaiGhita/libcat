@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include <any.h>
-#include <all.h>
+#include <var.h>
+#include <tup.h>
 
 #include <mnd.h>
 #include <opt.h>
+#include <lazy.h>
 
 #include <vector>
 
@@ -73,26 +74,11 @@ public:
         return *this;
     }
 
-    vec<T>& operator << (nil)
+    vec<T>& operator << (unit)
     {
         return *this;
     }
 
-    vec<T>& operator << (const opt<T>& ov)
-    {
-        ov >>= [&] (const T& v) {
-            p.emplace_back(v);
-        };
-        return *this;
-    }
-
-    vec<T>& operator << (opt<T>&& ov)
-    {
-        std::move(ov) >>= [&] (T&& v) {
-            p.emplace_back(std::move(v));
-        };
-        return *this;
-    }
 
     vec<T>& operator << (const vec<T>& v)
     {
@@ -120,6 +106,37 @@ public:
 private:
     std::vector<T> p;
 };
+
+template <typename T>
+vec<T>& operator << (vec<T>& lhs, opt<T>&& rhs)
+{
+    std::move(rhs) >>= [&] (T&& v) {
+        lhs << std::move(v);
+    };
+    return lhs;
+}
+
+template <typename T>
+const rc<vec<T>>& operator << (const rc<vec<T>>& lhs, const lazy<T>& rhs)
+{
+    rhs >>= [lhs = opt<rc<vec<T>>>{lhs}] (const T& v) {
+        for (auto&& flhs : lhs) {
+            *flhs << std::move(v);
+        };
+    };
+    return lhs;
+}
+
+template <typename T>
+const rc<vec<T>>& operator << (const rc<vec<T>>& lhs, lazy<T>&& rhs)
+{
+    std::move(rhs) >>= [lhs = opt<rc<vec<T>>>{lhs}] (T&& v) {
+        for (auto&& flhs : lhs) {
+            *flhs << std::move(v);
+        };
+    };
+    return lhs;
+}
 
 template <typename T>
 struct mnd<vec<T>> : public std::true_type

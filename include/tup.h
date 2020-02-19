@@ -10,7 +10,9 @@
 namespace cat {
 
 template <typename... T>
-using all = std::tuple<T...>;
-using nil = all<>;
+using tup = std::tuple<T...>;
+using unit = tup<>;
+
+inline constexpr unit nil{};
 
 }

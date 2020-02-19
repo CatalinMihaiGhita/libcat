@@ -5,9 +5,9 @@
 
 #include <mnd.h>
 #include <fn.h>
-#include <all.h>
-#include <any.h>
-#include <safe.h>
+#include <tup.h>
+#include <var.h>
+#include <box.h>
 #include <rc.h>
 #include <link.h>
 #include <opt.h>
