@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <tuple>
+#include <variant>
+#include <exception>
+#include <stdexcept>
 
 namespace cat {
 
-template <typename... T>
-using tup = std::tuple<T...>;
-using unit = tup<>;
-
-inline constexpr unit nil{};
+template <typename T>
+using expected = std::variant<std::exception_ptr, T>;
 
 }
