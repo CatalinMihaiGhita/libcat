@@ -1,0 +1,62 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+
+namespace cat {
+
+template <typename T>
+class lnk
+{
+    lnk() : p(nullptr) {}
+
+    template <typename U>
+    friend class box;
+
+public:
+    lnk(const own<T>& o) : p(o.p) {++p->wc;}
+    lnk(const lnk& o) : p(o.p) {++p->wc;}
+    lnk(lnk&&) = delete;
+
+    lnk& operator=(const own<T>& o) { ++o.p->wc; ~lnk(); p = o.p; }
+    lnk& operator=(const lnk& o) { ++o.p->wc; ~lnk(); p = o.p; }
+    lnk& operator=(lnk&&) = delete;
+
+    bool lost() const noexcept { return p->e; }
+
+    template <typename F>
+    void operator >>(F f) & {
+        if (p->e) {
+            f(p->t);
+        }
+    }
+
+    template <typename F>
+    void operator >>(F f) const& {
+        if (p->e) {
+            f(p->t);
+        }
+    }
+
+    template <typename F>
+    void operator >>(F f) && {
+        if (p->e) {
+            f(std::move(p->t));
+        }
+    }
+
+
+    ~lnk() {
+        if (--p->wc == 0 && !p->e) {
+            delete p;
+        }
+    }
+
+private:
+    typename own<T>::inside* p;
+};
+
+}

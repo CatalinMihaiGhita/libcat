@@ -1,0 +1,58 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <unit>
+#include <optional>
+
+namespace cat {
+
+template <class T>
+class maybe
+{
+    std::optional<T> o;
+
+public:
+    class iter
+    {
+        T* o;
+        friend class maybe;
+        iter(T* o) : o(o) {}
+    public:
+        constexpr T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::in_place, std::forward<U>(u)...) {}
+    maybe() : o() {}
+    maybe(unit) : o() {}
+
+    maybe& operator=(unit) { o = std::nullopt; return *this;}
+
+    constexpr bool is_some() const { return o; }
+    constexpr bool is_none() const { return !o; }
+
+    constexpr iter begin() { return iter{o ? o.operator->() : nullptr}; }
+    constexpr unit end() const { return {}; }
+};
+
+
+template <class T, class... U>
+maybe<T> some(U&&... u) 
+{ 
+    return maybe<T>{std::in_place, std::forward<U>(u)...};
+}
+
+template <class T>
+constexpr maybe<T> none() noexcept
+{
+    return {};
+}
+
+
+}

@@ -1,0 +1,33 @@
+// Copyright (C) 2020 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <type_traits>
+
+namespace cat {
+
+template <typename T>
+class cell
+{
+    mutable T t;
+
+public:
+    cell(const cell& c) : t(c.t) {}
+    cell(cell&& c) = delete;
+    cell(const T& t) : t(t) {}
+    cell(T&& t) : t(std::move(t)) {}
+
+    const cell& operator=(cell&& t) const = delete;
+    const cell& operator=(const cell& c) const { this->t = c.t; return *this; };
+
+
+    const cell& operator=(const T& t) const { this->t = t; return *this; };
+    const cell& operator=(T&& t) const { this->t = std::move(t); return *this; };
+
+    operator T() const { return t; }
+};
+
+}

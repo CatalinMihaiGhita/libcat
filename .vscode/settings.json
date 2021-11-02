@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "own": "cpp",
+        "sh": "cpp",
+        "cell": "cpp",
+        "rw": "cpp",
+        "box": "cpp",
+        "owned": "cpp",
+        "shared": "cpp",
+        "maybe": "cpp",
+        "ref_cell": "cpp"
+    }
+}

@@ -1,0 +1,151 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <unit>
+#include <memory>
+#include <maybe>
+
+namespace cat {
+
+template <typename T>
+class leased;
+
+template <typename T>
+class asset
+{
+    mutable unsigned rc;
+    mutable bool wc;
+    mutable T t;
+
+    friend class leased<T>;
+
+public:
+    asset(const T& t) : rc(0), wc(0), t(t) {}
+    asset(T&& t) : rc(0), wc(0), t(std::move(t)) {}
+    
+    maybe<leased<T>> try_lease_mut() const;
+    maybe<leased<const T>> try_lease() const;
+};
+
+template <typename T>
+class leased
+{
+    const asset<T>* p;
+    friend class maybe<leased<T>>;
+
+    leased(const asset<T>* p) : p(p) {}
+public:
+    
+    leased(const leased&) = delete;
+    leased(leased&&) = delete;
+
+    T* operator->() const { return &p->t; }
+    T& operator*() const { return p->t; }
+
+    ~leased() { if (p) p->wc = false; }
+};
+
+template <typename T>
+class leased<const T>
+{
+    const asset<T>* p;
+    leased(const asset<T>* p) : p(p) {}
+    friend class maybe<leased<T>>;
+
+public:
+    leased(const leased&) = delete;
+    leased(leased&&) = delete;
+
+    const T* operator->() const { return &p->t; }
+    const T& operator*() const { return p->t; }
+
+    ~leased() { if (p) --p->rc; }
+};
+
+template <class T>
+class maybe<leased<const T>>
+{
+    leased<const T> o;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        const T* o;
+        iter(const T* o) : o(o) {}
+    public:
+        constexpr const T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::forward<U>(u)...) {}
+    maybe() : o(nullptr) {}
+    maybe(unit) : o(nullptr) {}
+
+    maybe& operator=(unit) { o.~leased(); o.p = nullptr; }
+
+    constexpr bool is_just() const { return o.p; }
+    constexpr bool is_nothing() const { return !o.p; }
+
+    constexpr iter begin() { return iter{o.operator->()}; }
+    constexpr unit end() const { return {}; }
+};
+
+template <class T>
+class maybe<leased<T>>
+{
+    leased<T> o;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        T* o;
+        iter(T* o) : o(o) {}
+    public:
+        constexpr T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::forward<U>(u)...) {}
+    maybe() : o(nullptr) {}
+    maybe(unit) : o(nullptr) {}
+
+    maybe& operator=(unit) { o.~leased(); o.p = nullptr; }
+
+    constexpr bool is_just() const { return o.p; }
+    constexpr bool is_nothing() const { return !o.p; }
+
+    constexpr iter begin() { return iter{o.operator->()}; }
+    constexpr unit end() const { return {}; }
+};
+
+template <typename T>
+maybe<leased<T>> asset<T>::try_lease_mut() const
+{
+    [[unlikely]] if (wc || rc) {
+        return {};
+    }
+    wc = true;
+    return {std::in_place, this};
+}
+
+template <typename T>
+maybe<leased<const T>> asset<T>::try_lease() const
+{
+    [[unlikely]] if (wc) {
+        return {};
+    }
+    ++rc;
+    return {std::in_place, this};
+}
+
+}

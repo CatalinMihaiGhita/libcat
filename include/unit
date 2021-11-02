@@ -1,0 +1,32 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+namespace cat {
+
+class unit
+{
+public:
+    template <typename T>
+    explicit unit(const T&) {}
+
+    unit() = default;
+
+    unit(const unit&) = default;
+    unit& operator=(const unit&) = default;
+    
+};
+
+constexpr bool operator<(const unit&, const unit&) noexcept { return false; }
+constexpr bool operator>(const unit&, const unit&) noexcept { return false; }
+constexpr bool operator<=(const unit&, const unit&) noexcept { return true; }
+constexpr bool operator>=(const unit&, const unit&) noexcept { return true; }
+constexpr bool operator==(const unit&, const unit&) noexcept { return true; }
+constexpr bool operator!=(const unit&, const unit&) noexcept { return false; }
+
+inline constexpr unit empty{};
+
+}

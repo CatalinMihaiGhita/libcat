@@ -1,0 +1,69 @@
+// Copyright (C) 2020 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <type_traits>
+#include <memory>
+#include <utility>
+#include <maybe>
+
+namespace cat {
+
+template <typename T>
+class shared
+{
+    shared(shared&&) = default;
+    shared& operator=(shared&&) = default;
+    friend class maybe<shared<T>>;
+
+public:
+    template <typename... U>
+    explicit shared(std::in_place_t, U&&... t) : p(std::make_shared<T>(std::forward<U>(t)...)) {}
+
+    shared(const shared& o) = default;
+    shared& operator=(const shared& o) = default;
+    
+    const T* operator->() const noexcept { return p.get(); }
+    const std::add_lvalue_reference_t<T> operator*() const noexcept { return *p; }
+
+    ~shared() = default;
+
+private:
+    std::shared_ptr<const T> p;
+};
+
+template <class T>
+class maybe<shared<T>>
+{
+    shared<T> o;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        const T* o;
+        iter(const T* o) : o(o) {}
+    public:
+        constexpr const T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::in_place, std::forward<U>(u)...) {}
+    maybe() : o(nullptr) {}
+    maybe(unit) : o(nullptr) {}
+
+    maybe& operator=(unit) { o.p.reset(); return *this; }
+
+    constexpr bool is_just() const { return o.p; }
+    constexpr bool is_nothing() const { return !o.p; }
+
+    constexpr iter begin() const { return iter{o.p.get()}; }
+    constexpr unit end() const { return {}; }
+};
+
+}

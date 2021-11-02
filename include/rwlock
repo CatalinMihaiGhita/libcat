@@ -1,0 +1,150 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <unit>
+#include <shared_mutex>
+#include <maybe>
+
+namespace cat {
+
+template <typename T>
+class locked;
+
+template <typename T>
+class rwlock
+{
+    mutable std::shared_mutex m;
+    mutable T t;
+
+    friend class locked<T>;
+
+public:
+    rwlock(const T& t) : t(t) {}
+    rwlock(T&& t) : t(std::move(t)) {}
+    
+    maybe<locked<T>> try_lock_mut() const;
+    maybe<locked<const T>> try_lock() const;
+};
+
+template <typename T>
+class locked
+{
+    const rwlock<T>* p;
+    friend class maybe<locked<T>>;
+
+    locked(const rwlock<T>* p) : p(p) {}
+public:
+    
+    locked(const locked&) = delete;
+    locked(locked&&) = delete;
+
+    T* operator->() const { return &p->t; }
+    T& operator*() const { return p->t; }
+
+    ~locked() { if (p) p->m.unlock();}
+};
+
+template <typename T>
+class locked<const T>
+{
+    const rwlock<T>* p;
+    locked(const rwlock<T>* p) : p(p) {}
+    friend class maybe<locked<T>>;
+
+public:
+
+    locked(const locked&) = delete;
+    locked(locked&&) = delete;
+
+    const T* operator->() const { return &p->t; }
+    const T& operator*() const { return p->t; }
+
+    ~locked() { if (p) p->m.unlock(); }
+};
+
+
+template <class T>
+class maybe<locked<const T>>
+{
+    locked<T> o;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        const T* o;
+        iter(const T* o) : o(o) {}
+    public:
+        constexpr const T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::forward<U>(u)...) {}
+    maybe() : o(nullptr) {}
+    maybe(unit) : o(nullptr) {}
+
+    maybe& operator=(unit) { o.~locked(); o.p = nullptr; }
+
+    constexpr bool is_just() const { return o.p; }
+    constexpr bool is_nothing() const { return !o.p; }
+
+    constexpr iter begin() { return iter{o.operator->()}; }
+    constexpr unit end() const { return {}; }
+};
+
+template <class T>
+class maybe<locked<T>>
+{
+    locked<T> o;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        T* o;
+        iter(T* o) : o(o) {}
+    public:
+        constexpr T& operator*() const { return *o; }
+        constexpr bool operator!=(unit) const { return o != nullptr; }
+        constexpr void operator++() { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) : o(std::forward<U>(u)...) {}
+    maybe() : o(nullptr) {}
+    maybe(unit) : o(nullptr) {}
+
+    maybe& operator=(unit) { o.~locked(); o.p = nullptr; }
+
+    constexpr bool is_just() const { return o.p; }
+    constexpr bool is_nothing() const { return !o.p; }
+
+    constexpr iter begin() { return iter{o.operator->()}; }
+    constexpr unit end() const { return {}; }
+};
+
+template <typename T>
+maybe<locked<T>> rwlock<T>::try_lock_mut() const
+{
+    [[unlikely]] if (!m.try_lock()) {
+        return {};
+    }
+    return {std::in_place, this};
+}
+
+template <typename T>
+maybe<locked<const T>> rwlock<T>::try_lock() const
+{
+    [[unlikely]] if (!m.try_lock_shared()) {
+        return {};
+    }
+    return {std::in_place, this};
+}
+
+}

@@ -1,0 +1,73 @@
+// Copyright (C) 2020 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <type_traits>
+#include <maybe>
+
+namespace cat {
+
+template <typename T>
+class owned
+{
+    friend class maybe<owned<T>>;
+    owned(nullptr_t) : p(nullptr) {}
+    owned(owned&& o) = default;
+    owned& operator=(owned&& o) = default;
+
+public:
+    template <typename... U>
+    explicit owned(std::in_place_t, U&&... t) : p(new T{std::forward<U>(t)...}) {}
+
+    owned(const owned&) = delete;
+    owned& operator=(const owned&) = delete;
+
+    T* operator->() const noexcept { return p.get(); }
+    std::add_lvalue_reference_t<T> operator*() const noexcept { return *p; }
+
+    ~owned() = default;
+private:
+    std::unique_ptr<T> p;
+};
+
+template <class T>
+class maybe<owned<T>>
+{
+    std::unique_ptr<T> p;
+
+public:
+    class iter
+    {
+        friend class maybe;
+        T* o;
+        iter(T* o) : o(o) {}
+    public:
+        constexpr T& operator*() const noexcept { return *o; }
+        constexpr bool operator!=(unit) const noexcept { return o != nullptr; }
+        constexpr void operator++() noexcept { o = nullptr; }
+    };
+    
+    template <class... U>
+    maybe(std::in_place_t, U&&... u) noexcept : p{new (std::nothrow) T{std::forward<U>(u)...}} {}
+    maybe() = default;
+    maybe(unit) : p{} {}
+
+    maybe(maybe&&) = default;
+    maybe& operator=(maybe&&) = default;
+
+    maybe& operator=(unit) { p.reset(); return *this; }
+
+    constexpr bool is_just() const noexcept { return p; }
+    constexpr bool is_nothing() const noexcept { return !p; }
+
+    constexpr iter begin() noexcept { return iter{p.get()}; }
+    constexpr unit end() const noexcept { return {}; }
+
+    ~maybe() = default;
+};
+
+
+}

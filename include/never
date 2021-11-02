@@ -1,0 +1,29 @@
+// Copyright (C) 2018 Ghita Catalin Mihai
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#pragma once
+
+#include <cstdlib>
+
+namespace cat {
+
+class never
+{
+public:
+    explicit never() = delete;
+    [[noreturn]] never(const never&) { std::abort(); }
+    [[noreturn]] never& operator=(const never&) { std::abort(); }
+    template <typename T>
+    [[noreturn]] operator T() const { std::abort(); }
+};
+
+constexpr bool operator<(const never&, const never&) noexcept { return false; }
+constexpr bool operator>(const never&, const never&) noexcept { return false; }
+constexpr bool operator<=(const never&, const never&) noexcept { return false; }
+constexpr bool operator>=(const never&, const never&) noexcept { return false; }
+constexpr bool operator==(const never&, const never&) noexcept { return false; }
+constexpr bool operator!=(const never&, const never&) noexcept { return false; }
+
+}
